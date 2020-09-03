@@ -25,7 +25,8 @@ public class App {
     Configuration configuration = loadConfiguration();
     if (configuration != null) {
       final TelegramBot bot = new TelegramBot(configuration.botToken());
-      bot.setUpdatesListener(new BanksUpdatesListener(bot));
+      final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot);
+      bot.setUpdatesListener(new BanksUpdatesListener(configuration, bot, chatStateMachinesManager));
     }
   }
 }
