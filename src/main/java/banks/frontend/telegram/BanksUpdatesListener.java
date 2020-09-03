@@ -1,6 +1,7 @@
 package banks.frontend.telegram;
 
 import java.util.List;
+import java.util.HashMap;
 import java.io.IOException;
 
 import com.pengrad.telegrambot.TelegramBot;
@@ -13,21 +14,22 @@ import com.pengrad.telegrambot.request.BaseRequest;
 import com.pengrad.telegrambot.response.BaseResponse;
 
 public class BanksUpdatesListener implements UpdatesListener {
+  private final Configuration configuration;
   private final TelegramBot bot;
+  private final ChatStateMachinesManager chatStateMachinesManager;
 
-  public BanksUpdatesListener(TelegramBot bot) {
+  public BanksUpdatesListener(Configuration configuration, TelegramBot bot, ChatStateMachinesManager chatStateMachinesManager) {
+    this.configuration = configuration;
     this.bot = bot;
+    this.chatStateMachinesManager = chatStateMachinesManager;
   }
 
   @Override
   public int process(final List<Update> updates) {
     updates.forEach((update) -> {
-      final long userId = update.message().from().id();
       final long chatId = update.message().chat().id();
-      final String text = update.message().text();
-      System.out.println("Message from " + userId + "\r\n" + update);
-      BaseResponse r = bot.execute(new SendMessage(chatId, text + " !"));
-      System.out.println("Reponse : " + r);
+      final ChatStateMachine csm = this.chatStateMachinesManager.getOrCreateChatStateMachine(chatId);
+      csm.process(update);
     });
 
     return UpdatesListener.CONFIRMED_UPDATES_ALL;

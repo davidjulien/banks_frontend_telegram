@@ -15,57 +15,48 @@ import com.pengrad.telegrambot.response.BaseResponse;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-import com.pengrad.telegrambot.TelegramBot;
 
 /**
- * Unit test for BanksUpdatesListener
+ * Unit tests for BanksUpdatesListener
  */
 public class BanksUpdatesListenerTest 
 {
   private static final String BOT_TOKEN = "fake_bot_token";
+  private static final String SECURITY_CODE = "security_code";
+  private static final long CHAT_ID = 123456;
 
   @Test 
   public void shouldCreateBanksUpdateListener() {
+    final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    BanksUpdatesListener listener = new BanksUpdatesListener(bot);
+    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot);
+    BanksUpdatesListener listener = new BanksUpdatesListener(configuration, bot, chatStateMachinesManager);
     assertNotNull(listener);
   }
 
-  /* Mock TelegramBot to verify calls of "execute" function
-   */
-  public class TelegramBotMock extends TelegramBot {
-    public ArrayList<BaseRequest> calls;
-
-    public TelegramBotMock(String botToken) {
-      super(botToken);
-      this.calls = new ArrayList<BaseRequest>();
-    }
-
-    @Override
-    public BaseResponse execute(BaseRequest request) {
-      this.calls.add(request); // Stores request
-      //return gson.fromJson("{\"ok\":true}", BaseResponse.class);
-      return super.execute(request);
-    }
-  };
-
   @Test
-  public void shouldReplyToMessage() {
-    final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    BanksUpdatesListener listener = new BanksUpdatesListener(bot);
+  public void shouldCreateChatStateMachineAndProcessUpdate() {
+    final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    final TelegramBot bot = new TelegramBot(BOT_TOKEN);
+    final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot);
+    BanksUpdatesListener listener = new BanksUpdatesListener(configuration, bot, chatStateMachinesManagerMock);
 
+    /* List of updates */
     ArrayList<Update> updatesList = new ArrayList<Update>();
-    Update update = BotUtils.parseUpdate("{\"update_id\":874199391,\n" +
-            "\"message\":{\"message_id\":33111,\"from\":{\"id\":1231231231,\"is_bot\":false,\"first_name\":\"RRRR\",\"username\":\"RRRR54321\"},\"chat\":{\"id\":123456,\"title\":\"hhh iiiiii ccccc\",\"type\":\"supergroup\"},\"date\":1579958705,\"text\":\"Hello World\"}}");
+    Update update = ChatStateMachineTest.buildUpdateWithMessage(CHAT_ID, "Hello World");
     updatesList.add(update);
 
+    /* Processing list */
     int ret = listener.process(updatesList);
+
+    /* Verify that we get or create a new ChatStateMachine and that we call its process function with update message */
     assertEquals(UpdatesListener.CONFIRMED_UPDATES_ALL, ret);
-    assertEquals(1, bot.calls.size());                                  // only 1 call
-    BaseRequest request = bot.calls.get(0);
-    assertTrue(request instanceof SendMessage);                         // message is SendMessage
-    Map<String,Object> params = request.getParameters();
-    assertEquals((long)123456, params.get("chat_id"));
-    assertEquals("Hello World !", params.get("text"));
+
+    assertEquals(1, chatStateMachinesManagerMock.getOrCreateCalls.size());                                  // Call to create ChatStateMachine
+    ChatStateMachinesManagerMock.ChatStateMachineMock chatStateMachineMock = chatStateMachinesManagerMock.getOrCreateCalls.get(CHAT_ID);
+
+    assertNotNull(chatStateMachineMock);
+    assertEquals(1, chatStateMachineMock.processCalls.size());                                              // Call to process Update
+    assertEquals(update, chatStateMachineMock.processCalls.get(0));
   }
 }
