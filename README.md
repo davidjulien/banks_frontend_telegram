@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/davidjulien/banks_frontend_telegram.svg?branch=master)](https://travis-ci.com/davidjulien/banks_frontend_telegram)
-[![Code Coverage](https://codecov.io/github/davidjulien/banks_frontend_telegram)](https://codecov.io/gh/davidjulien/banks_frontend_telegram)
+[![Code Coverage](https://codecov.io/gh/davidjulien/banks_frontend_telegram/branch/master/graph/badge.svg)](https://codecov.io/gh/davidjulien/banks_frontend_telegram)
 
 banks_frontend_telegram
 =======================
