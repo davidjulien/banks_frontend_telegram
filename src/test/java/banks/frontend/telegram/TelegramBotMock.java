@@ -17,22 +17,21 @@ import com.pengrad.telegrambot.response.BaseResponse;
  * Mock TelegramBot to verify calls of "execute" function
  */
 public class TelegramBotMock extends TelegramBot {
-  public ArrayList<BaseRequest> calls;
+  public final ArrayList<BaseRequest> executeCalls;
 
   public TelegramBotMock(String botToken) {
     super(botToken);
-    this.calls = new ArrayList<BaseRequest>();
+    this.executeCalls = new ArrayList<BaseRequest>();
   }
 
   @Override
   public BaseResponse execute(BaseRequest request) {
-    this.calls.add(request); // Stores request
-    //return gson.fromJson("{\"ok\":true}", BaseResponse.class);
+    this.executeCalls.add(request); // Stores request
     return super.execute(request);
   }
 
   public boolean verifyExecuteCall(int numCall, long expectedChatId, String expectedMessage) {
-    BaseRequest request = this.calls.get(numCall);
+    BaseRequest request = this.executeCalls.get(numCall);
     assertTrue(request instanceof SendMessage);                         // message is SendMessage
     Map<String,Object> params = request.getParameters();
     assertEquals(expectedChatId, params.get("chat_id"));                // verify chat id

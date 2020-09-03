@@ -33,7 +33,7 @@ public class ChatStateMachineTest {
     ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
 
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
-    assertEquals(0, bot.calls.size());
+    assertEquals(0, bot.executeCalls.size());
   }
 
   // Tests in INIT state
@@ -52,7 +52,7 @@ public class ChatStateMachineTest {
 
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
 
-    assertEquals(1, bot.calls.size());                                  // only 1 call
+    assertEquals(1, bot.executeCalls.size());                                  // only 1 call
     bot.verifyExecuteCall(0, CHAT_ID, "Security code validated.");      // Message sent
   }
 
@@ -82,7 +82,7 @@ public class ChatStateMachineTest {
 
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
 
-    assertEquals(1, bot.calls.size());                                                // only 1 call
+    assertEquals(1, bot.executeCalls.size());                                                // only 1 call
     bot.verifyExecuteCall(0, CHAT_ID, "Security code required to access data.");      // Message sent
   }
 
@@ -93,14 +93,14 @@ public class ChatStateMachineTest {
     ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
 
     assertEquals(ChatStateMachine.StateName.INVALID_STATE, csm.currentStateName());
-    assertEquals(0, bot.calls.size());
+    assertEquals(0, bot.executeCalls.size());
 
     Update initUpdate = buildUpdateWithMessage(CHAT_ID, "blabla");
     csm.process(initUpdate);
 
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
 
-    assertEquals(1, bot.calls.size());                                                // only 1 call
+    assertEquals(1, bot.executeCalls.size());                                                // only 1 call
     bot.verifyExecuteCall(0, CHAT_ID, "Bot is in an unknown state. Init it again with /init YOUR_SECURITY_CODE");      // Message sent
   }
 
@@ -122,7 +122,7 @@ public class ChatStateMachineTest {
     csm.process(initUpdate);
 
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
-    assertEquals(1, bot.calls.size());                                  // only 1 call
+    assertEquals(1, bot.executeCalls.size());                                  // only 1 call
     bot.verifyExecuteCall(0, CHAT_ID, "Security code validated.");
 
     // Send message
@@ -132,7 +132,7 @@ public class ChatStateMachineTest {
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
 
     // Verify 
-    assertEquals(2, bot.calls.size());                                  // one more call
+    assertEquals(2, bot.executeCalls.size());                                  // one more call
     bot.verifyExecuteCall(1, CHAT_ID, MESSAGE + " !");
   }
 
