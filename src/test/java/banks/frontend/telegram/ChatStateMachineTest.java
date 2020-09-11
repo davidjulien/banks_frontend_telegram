@@ -1,5 +1,7 @@
 package banks.frontend.telegram;
 
+import banks.frontend.telegram.model.Transaction;
+
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -37,7 +39,7 @@ public class ChatStateMachineTest {
   }
 
   // Tests in INIT state
-  
+
   @Test
   public void shouldSwitchToEchoFromInitAfterSecurityCodeValidation() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
@@ -45,7 +47,7 @@ public class ChatStateMachineTest {
     ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
 
     Update initUpdate = buildUpdateWithMessage(CHAT_ID, "/init " + SECURITY_CODE);
- 
+
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
 
     csm.process(initUpdate);
@@ -63,7 +65,7 @@ public class ChatStateMachineTest {
     ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
 
     Update initUpdate = buildUpdateWithMessage(CHAT_ID, "/init blabla");
- 
+
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
     csm.process(initUpdate);
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
@@ -76,7 +78,7 @@ public class ChatStateMachineTest {
     ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
 
     Update initUpdate = buildUpdateWithMessage(CHAT_ID, "other message");
- 
+
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
     csm.process(initUpdate);
 
@@ -98,42 +100,135 @@ public class ChatStateMachineTest {
     Update initUpdate = buildUpdateWithMessage(CHAT_ID, "blabla");
     csm.process(initUpdate);
 
+    // Verify that ChatStateMachine returns in INIT state
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
 
-    assertEquals(1, bot.executeCalls.size());                                                // only 1 call
-    bot.verifyExecuteCall(0, CHAT_ID, "Bot is in an unknown state. Init it again with /init YOUR_SECURITY_CODE");      // Message sent
+    // Verify that bot sends a message to user
+    assertEquals(1, bot.executeCalls.size());
+    bot.verifyExecuteCall(0, CHAT_ID, "Bot is in an unknown state. Init it again with /init YOUR_SECURITY_CODE");
   }
+
+  @Test
+  public void shouldDoNothingInInitWhenNewTransactionsAreAvailable() {
+    Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
+
+    NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(new ArrayList<Transaction>());
+
+    assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
+    csm.process(newTransactionsEvent);
+
+    // Verify that we remain in INIT state
+    assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
+
+    // Verify that bot does not send a message to user
+    assertEquals(0, bot.executeCalls.size());
+  }
+
 
 
   // Tests in ECHO state
 
 
+  // ChatStateMachine processes user request
   @Test
   public void shouldEchoMessage() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
     final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
 
-    // Init ChatStateMachine
-    final Update initUpdate = buildUpdateWithMessage(CHAT_ID, "/init "+SECURITY_CODE);
- 
+    // Verify that ChatStateMachine is in INIT state
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
 
+    // User sends /init with valid code
+    final Update initUpdate = buildUpdateWithMessage(CHAT_ID, "/init "+SECURITY_CODE);
     csm.process(initUpdate);
 
+    // Verify that ChatStateMachine is in ECHO state
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
-    assertEquals(1, bot.executeCalls.size());                                  // only 1 call
+    assertEquals(1, bot.executeCalls.size());
     bot.verifyExecuteCall(0, CHAT_ID, "Security code validated.");
 
-    // Send message
+    // User sends a message
     final String MESSAGE = "Hello world";
     final Update messageUpdate = buildUpdateWithMessage(CHAT_ID, MESSAGE);
     csm.process(messageUpdate);
+
+    // Verify that ChatStateMachine is still in ECHO state
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
 
-    // Verify 
-    assertEquals(2, bot.executeCalls.size());                                  // one more call
+    // Verify that ChatStateMachine answers correctly
+    assertEquals(2, bot.executeCalls.size());
     bot.verifyExecuteCall(1, CHAT_ID, MESSAGE + " !");
+  }
+
+  // ChatStateMachine processes NewTransactionsEvent
+  @Test
+  public void shouldFeedbackNewTransactionsEventToUser() {
+    final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.ECHO);
+
+    // Verify that ChatStateMachine is in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(new ArrayList<Transaction>());
+    csm.process(newTransactionsEvent);
+
+    // Verify that ChatStateMachine remains in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Verify that ChatStateMachine sends a message containing information related to new transactions
+    assertEquals(1, bot.executeCalls.size());
+    bot.verifyExecuteCall(0, CHAT_ID, "0 new transaction(s) identified.");
+  }
+
+
+  // INVALID_STATE cases
+  // Always go back to INIT state
+
+
+  // In case of user event, ChatStateMachine goes back to INIT state and sends a message to user
+  @Test
+  public void shouldGoBackToInitWithFeedbackFromAnInvalidStateWithUserEvent() {
+    Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
+
+    assertEquals(ChatStateMachine.StateName.INVALID_STATE, csm.currentStateName());
+    assertEquals(0, bot.executeCalls.size());
+
+    Update initUpdate = buildUpdateWithMessage(CHAT_ID, "blabla");
+    csm.process(initUpdate);
+
+    // Verify that ChatStateMachine returns in INIT state
+    assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
+
+    // Verify that bot sends a message to user
+    assertEquals(1, bot.executeCalls.size());
+    bot.verifyExecuteCall(0, CHAT_ID, "Bot is in an unknown state. Init it again with /init YOUR_SECURITY_CODE");
+  }
+
+
+  // In case of database event, ChatStateMachine goes back to INIT state and no message is sent
+  @Test
+  public void shouldGoBackToInitWithoutFeedbackFromAnInvalidStateWithDatabaseEvent() {
+    Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
+
+    assertEquals(ChatStateMachine.StateName.INVALID_STATE, csm.currentStateName());
+    assertEquals(0, bot.executeCalls.size());
+
+    NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(new ArrayList<Transaction>());
+    csm.process(newTransactionsEvent);
+
+    // Verify that ChatStateMachine returns in INIT state
+    assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
+
+    // Verify that bot does not send a message to user
+    assertEquals(0, bot.executeCalls.size());
   }
 
 }
