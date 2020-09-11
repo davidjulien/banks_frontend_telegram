@@ -53,7 +53,7 @@ public class BanksUpdatesListenerTest
     assertEquals(UpdatesListener.CONFIRMED_UPDATES_ALL, ret);
 
     assertEquals(1, chatStateMachinesManagerMock.getOrCreateCalls.size());                                  // Call to create ChatStateMachine
-    ChatStateMachinesManagerMock.ChatStateMachineMock chatStateMachineMock = chatStateMachinesManagerMock.getOrCreateCalls.get(CHAT_ID);
+    ChatStateMachineMock chatStateMachineMock = chatStateMachinesManagerMock.getOrCreateCalls.get(CHAT_ID);
 
     assertNotNull(chatStateMachineMock);
     assertEquals(1, chatStateMachineMock.processCalls.size());                                              // Call to process Update
