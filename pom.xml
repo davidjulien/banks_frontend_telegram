@@ -32,6 +32,15 @@
     </dependency>
 
     <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.5.10</version>
+      <scope>test</scope>
+    </dependency>
+
+
+
+    <dependency>
       <groupId>org.jacoco</groupId>
       <artifactId>org.jacoco.agent</artifactId>
       <classifier>runtime</classifier>
@@ -44,6 +53,12 @@
       <groupId>com.github.pengrad</groupId>
       <artifactId>java-telegram-bot-api</artifactId>
       <version>4.9.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.2.16</version>
     </dependency>
 
   </dependencies>
@@ -62,6 +77,11 @@
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
+          <configuration>
+            <compilerArgs>
+              <arg>-Xlint</arg>
+            </compilerArgs>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -70,6 +90,7 @@
             <systemPropertyVariables>
               <jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
             </systemPropertyVariables>
+            <trimStackTrace>false</trimStackTrace>
           </configuration>
         </plugin>
         <plugin>
