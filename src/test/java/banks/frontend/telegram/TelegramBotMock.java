@@ -25,6 +25,7 @@ public class TelegramBotMock extends TelegramBot {
   }
 
   @Override
+  @SuppressWarnings("unchecked") // workaround method clash
   public BaseResponse execute(BaseRequest request) {
     this.executeCalls.add(request); // Stores request
     return super.execute(request);
@@ -33,7 +34,7 @@ public class TelegramBotMock extends TelegramBot {
   public boolean verifyExecuteCall(int numCall, long expectedChatId, String expectedMessage) {
     BaseRequest request = this.executeCalls.get(numCall);
     assertTrue(request instanceof SendMessage);                         // message is SendMessage
-    Map<String,Object> params = request.getParameters();
+    Map<String,Object> params = ((SendMessage)request).getParameters();
     assertEquals(expectedChatId, params.get("chat_id"));                // verify chat id
     assertEquals(expectedMessage, params.get("text"));                  // verify message content
     return true;

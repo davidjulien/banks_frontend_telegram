@@ -27,20 +27,9 @@ public class ChatStateMachinesManagerMock extends ChatStateMachinesManager {
     return chatStateMachineMock;
   }
 
-  /* Mocking ChatStateMachine to verify calls to process method */
-  public class ChatStateMachineMock extends ChatStateMachine {
-    private final long chatId;
-    public final ArrayList<Update> processCalls;
-    
-    public ChatStateMachineMock(long chatId) {
-      super(null, null, chatId);
-      this.chatId = chatId;
-      this.processCalls = new ArrayList<Update>();
-    }
-
-    public void process(Update update) {
-      this.processCalls.add(update);
-    }
+  @Override
+  public ChatStateMachine[] getAllChatStateMachines() {
+    ChatStateMachineMock[] all = new ChatStateMachineMock[this.getOrCreateCalls.size()];
+    return this.getOrCreateCalls.values().toArray(all);
   }
-
 }
