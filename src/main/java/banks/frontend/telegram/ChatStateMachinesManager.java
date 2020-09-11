@@ -36,4 +36,9 @@ public class ChatStateMachinesManager {
       return csm;
     }
   }
+
+  public ChatStateMachine[] getAllChatStateMachines() {
+    ChatStateMachine[] all = new ChatStateMachine[this.chatIdToChatStateMachines.size()];
+    return this.chatIdToChatStateMachines.values().toArray(all);
+  }
 }
