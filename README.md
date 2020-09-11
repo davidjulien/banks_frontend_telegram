@@ -6,7 +6,7 @@ banks_frontend_telegram
 
 A telegram bot to receive notifications whew new transactions are stored by [banks_fetch](https://github.com/davidjulien/banks_fetch).
 
-Current version is just an echo bot.
+Bot sends a message when new transactions are available in database. This message describes how many new transactions have been discovered since last checking. Transactions descriptions will come soon.
 
 Configuration
 ---
@@ -35,8 +35,9 @@ Init conversation on Telegram
 
 - Open URL https://t.me/YOUR_BOT_USERNAME to start conversation
 - Send an init command containing your security code : `/init YOUR_SECURITY_CODE`
+- Wait for events (new transactions detected)
 
-Current version is only an echo bot.
+Don't forget to run `banks_fetch` in an other session to fetch data from your banks!
 
 Tests
 ---
