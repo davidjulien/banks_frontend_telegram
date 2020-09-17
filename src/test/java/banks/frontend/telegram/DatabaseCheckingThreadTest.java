@@ -73,7 +73,7 @@ public class DatabaseCheckingThreadTest {
     assertEquals(newTransactionsArrayList, chatStateMachineMock2.processNewTransactionsEventCalls.get(0).getTransactions());
 
     // Verify lastChecking update
-    assertTrue(databaseCheckingThread.lastChecking().isAfter(offsetDateTimeBeforeRun));
+    assertTrue(databaseCheckingThread.lastChecking().equals(offsetDateTimeBeforeRun) || databaseCheckingThread.lastChecking().isAfter(offsetDateTimeBeforeRun));
   }
 
   @Test 
@@ -102,6 +102,6 @@ public class DatabaseCheckingThreadTest {
     assertEquals(0, chatStateMachineMock2.processNewTransactionsEventCalls.size());
 
     // Verify lastChecking update
-    assertTrue(databaseCheckingThread.lastChecking().isAfter(offsetDateTimeBeforeRun));
+    assertTrue(databaseCheckingThread.lastChecking().equals(offsetDateTimeBeforeRun) || databaseCheckingThread.lastChecking().isAfter(offsetDateTimeBeforeRun));
   }
 }
