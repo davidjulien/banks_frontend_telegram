@@ -37,6 +37,7 @@ public class Storage {
       } else {
         version = "0.0.0";
       }
+      con.close();
 
       return true;
     } catch (SQLException ex) {

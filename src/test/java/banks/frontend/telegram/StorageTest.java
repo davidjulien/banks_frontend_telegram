@@ -14,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
+import org.postgresql.ds.PGSimpleDataSource;
 
 import banks.frontend.telegram.model.Transaction;
 
@@ -44,8 +45,9 @@ public class StorageTest {
   @Mock
   private ResultSet rs;
 
+  private PGSimpleDataSource banksDataSource;
 
-  @Test 
+  @Test
   public void shouldConnectToAnInitializedDatabase() throws Exception {
     assertNotNull(ds);
     when(c.createStatement()).thenReturn(stmt);
@@ -59,7 +61,7 @@ public class StorageTest {
     assertTrue(storage.connect());
   }
 
-  @Test 
+  @Test
   public void shouldConnectToAnUnitailizedDatabase() throws Exception {
     assertNotNull(ds);
     when(c.createStatement()).thenReturn(stmt);
@@ -67,26 +69,26 @@ public class StorageTest {
 
     when(rs.next()).thenReturn(false);
     when(stmt.executeQuery(any(String.class))).thenReturn(rs);
- 
+
     Storage storage = new Storage(ds);
     assertTrue(storage.connect());
   }
 
   // Tests simulating an SQL error to verify that returned data are expected ones
-  @Test 
+  @Test
   public void shouldNotConnectToDatabase() throws Exception {
     assertNotNull(ds);
     when(ds.getConnection()).thenThrow(SQLException.class);
- 
+
     Storage storage = new Storage(ds);
     assertFalse(storage.connect());
   }
 
-  @Test 
+  @Test
   public void shouldReturnNullIfgetNewTransactionsSinceFailed() throws Exception {
     assertNotNull(ds);
     when(ds.getConnection()).thenThrow(SQLException.class);
- 
+
     // Verify that we don't have a list in case of SQL errors
     Storage storage = new Storage(ds);
     assertNull(storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,8,0,0,0,ZoneOffset.UTC)));
@@ -94,28 +96,35 @@ public class StorageTest {
 
 
   // Tests on real test database
- 
-  org.postgresql.ds.PGSimpleDataSource setupDatabase() {
-    org.postgresql.ds.PGSimpleDataSource realDataSource = new org.postgresql.ds.PGSimpleDataSource();
-    realDataSource.setDatabaseName("banks_fetch_test");
-    realDataSource.setUser("banks_fetch_user");
-    return realDataSource;
+
+  PGSimpleDataSource setupDatabase() throws java.sql.SQLException, java.io.FileNotFoundException {
+    PGSimpleDataSource postgresDataSource = new PGSimpleDataSource();
+    postgresDataSource.setDatabaseName("postgres");
+    postgresDataSource.setUser("banks_fetch_user");
+    Connection postgresCon = postgresDataSource.getConnection();
+    Statement st = postgresCon.createStatement();
+    st.executeUpdate("DROP DATABASE IF EXISTS banks_fetch_test;");
+    st.executeUpdate("CREATE DATABASE banks_fetch_test WITH OWNER banks_fetch_user;");
+    st.close();
+    postgresCon.close();
+
+    PGSimpleDataSource banksDataSource = new PGSimpleDataSource();
+    banksDataSource.setDatabaseName("banks_fetch_test");
+    banksDataSource.setUser("banks_fetch_user");
+    importSQLFromFile(banksDataSource, "src/test/resources/setup_banks_fetch_db.sql");
+
+    return banksDataSource;
   }
 
+  public static void importSQLFromFile(PGSimpleDataSource dataSource, String fileName) throws java.io.FileNotFoundException, java.sql.SQLException {
+    File file = new File(fileName);
+    InputStream in = new FileInputStream(file);
 
-  @Test 
-  public void shouldConnectToRealTestDatabase() throws Exception {
-    org.postgresql.ds.PGSimpleDataSource realDataSource = setupDatabase();
-
-    Storage storage = new Storage(realDataSource);
-    assertTrue(storage.connect());
-  }
-
-  public static void importSQL(Connection conn, InputStream in) throws SQLException {
     Scanner s = new Scanner(in);
     s.useDelimiter("(;(\r)?\n)|(--\n)");
     Statement st = null;
     try {
+      Connection conn = dataSource.getConnection();
       st = conn.createStatement();
       while (s.hasNext()) {
         String line = s.next();
@@ -123,6 +132,8 @@ public class StorageTest {
           st.execute(line);
         }
       }
+      st.close();
+      conn.close();
     } catch (SQLException e) {
       System.err.println("Invalid SQL test file : " + e);
     } finally {
@@ -132,16 +143,23 @@ public class StorageTest {
     }
   }
 
+
+  @Test
+  public void shouldConnectToRealTestDatabase() throws Exception {
+    PGSimpleDataSource banksDataSource = setupDatabase();
+
+    Storage storage = new Storage(banksDataSource);
+    assertTrue(storage.connect());
+  }
+
   @Test
   public void shouldGetNewTransactionsSinceLastChecking() throws Exception {
-    org.postgresql.ds.PGSimpleDataSource realDataSource = setupDatabase();
-    Storage storage = new Storage(realDataSource);
+    PGSimpleDataSource banksDataSource = setupDatabase();
+    Storage storage = new Storage(banksDataSource);
+    assertTrue(storage.connect());
 
-    // Setup database content
-    File file = new File("src/test/resources/setup_db_for_tests.sql");
-    InputStream in = new FileInputStream(file);
-    Connection con = realDataSource.getConnection();
-    importSQL(con, in);
+    // Setup tests content
+    importSQLFromFile(banksDataSource, "src/test/resources/setup_db_for_tests.sql");
 
     // Tests
     ArrayList<Transaction> transactions = storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,8,0,0, 0, ZoneOffset.UTC));
