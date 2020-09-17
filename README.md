@@ -6,7 +6,10 @@ banks_frontend_telegram
 
 A telegram bot to receive notifications whew new transactions are stored by [banks_fetch](https://github.com/davidjulien/banks_fetch).
 
-Bot sends a message when new transactions are available in database. This message describes how many new transactions have been discovered since last checking. Transactions descriptions will come soon.
+Each time new transactions are discovered in `banks_fetch` database, bot sends for each transaction a message describing it.
+
+<img src="https://user-images.githubusercontent.com/726552/93479741-f1c6b500-f8fc-11ea-9f38-9e42fadfa7a5.png" title="Bot displaying transactions" width="300"></img>
+
 
 Configuration
 ---
