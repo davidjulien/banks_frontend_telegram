@@ -159,7 +159,7 @@ public class StorageTest {
     assertTrue(storage.connect());
 
     // Setup tests content
-    importSQLFromFile(banksDataSource, "src/test/resources/setup_db_for_tests.sql");
+    importSQLFromFile(banksDataSource, "src/test/resources/setup_db_for_getNewTransactionsSinceLastChecking.sql");
 
     // Tests
     ArrayList<Transaction> transactions = storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,8,0,0, 0, ZoneOffset.UTC));
