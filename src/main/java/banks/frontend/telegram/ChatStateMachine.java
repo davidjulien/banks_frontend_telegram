@@ -5,7 +5,9 @@ import java.util.regex.Pattern;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.BaseResponse;
 
 /**
  * Each ChatStateMachine manages one conversation. ChatStateMachine are created and managed by ChatStateMachinesManager.
@@ -14,6 +16,9 @@ import com.pengrad.telegrambot.request.SendMessage;
  *  - ECHO : reply to any received message by adding an ' !' at the end of the message, sends message when new transactions are available
  */
 public class ChatStateMachine {
+  /* Telegram max message length %*/
+  private static int MAX_MESSAGE_LENGTH = 4096;
+
   enum StateName {
     INIT,
     ECHO,
@@ -101,6 +106,17 @@ public class ChatStateMachine {
   }
 
   private void process_state_echo(NewTransactionsEvent newTransactionsEvent) {
-    bot.execute(new SendMessage(chatId, newTransactionsEvent.getTransactions().size() + " new transaction(s) identified."));
+    // Send how many new transactions have been identified
+    final int nbrTransactions = newTransactionsEvent.getTransactions().size();
+    final String withOrWithoutS = nbrTransactions <= 1 ? "" : "s";
+    bot.execute(new SendMessage(chatId, newTransactionsEvent.getTransactions().size() + " new transaction" + withOrWithoutS + " identified."));
+
+    // Send one message for each transaction
+    newTransactionsEvent.getTransactions().forEach((transaction) -> {
+      final String transactionDescription = transaction.toMarkdownString();
+      // We suppose that we don't have description longer than MAX_MESSAGE_LENGTH..
+      BaseResponse baseResponse = bot.execute(new SendMessage(chatId, transactionDescription).parseMode(ParseMode.Markdown));
+      System.err.println("BaseResponse="+baseResponse.toString()+"-"+baseResponse.isOk()+"-"+baseResponse.errorCode()+"-"+baseResponse.description());
+    });
   }
 }

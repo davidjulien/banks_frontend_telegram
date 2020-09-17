@@ -2,7 +2,8 @@ package banks.frontend.telegram;
 
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileInputStream;
@@ -88,7 +89,7 @@ public class StorageTest {
  
     // Verify that we don't have a list in case of SQL errors
     Storage storage = new Storage(ds);
-    assertNull(storage.getNewTransactionsSince(LocalDateTime.of(2020,9,6,8,0,0)));
+    assertNull(storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,8,0,0,0,ZoneOffset.UTC)));
   }
 
 
@@ -143,10 +144,10 @@ public class StorageTest {
     importSQL(con, in);
 
     // Tests
-    ArrayList<Transaction> transactions = storage.getNewTransactionsSince(LocalDateTime.of(2020,9,6,8,0,0));
+    ArrayList<Transaction> transactions = storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,8,0,0, 0, ZoneOffset.UTC));
     assertEquals(1, transactions.size());
 
-    transactions = storage.getNewTransactionsSince(LocalDateTime.of(2020,9,6,0,0,0));
+    transactions = storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,6,0,0,0, ZoneOffset.UTC));
     assertEquals(2, transactions.size());
   }
 }

@@ -3,7 +3,8 @@ package banks.frontend.telegram;
 import banks.frontend.telegram.model.Transaction;
 
 import java.util.ArrayList;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.LocalDate;
 
 import com.pengrad.telegrambot.TelegramBot;
@@ -36,7 +37,7 @@ public class DatabaseCheckingThreadTest {
       this.transactions = transactions;
     }
 
-    public ArrayList<Transaction> getNewTransactionsSince(LocalDateTime lastChecking) {
+    public ArrayList<Transaction> getNewTransactionsSince(OffsetDateTime lastChecking) {
       return this.transactions;
     }
   }
@@ -47,7 +48,7 @@ public class DatabaseCheckingThreadTest {
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
     final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot);
     final ArrayList<Transaction> newTransactionsArrayList = new ArrayList<Transaction>();
-    final Transaction fakeTransaction = new Transaction(1, "ing", "client", "acccount", LocalDateTime.now(), "transaction", LocalDate.now(), LocalDate.now(), 123.45, "descriiption", Transaction.TransactionType.SEPA_DEBIT);
+    final Transaction fakeTransaction = new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction", LocalDate.now(), LocalDate.now(), 123.45, "descriiption", Transaction.TransactionType.SEPA_DEBIT);
     newTransactionsArrayList.add(fakeTransaction);
     final StorageMock storageMock = new StorageMock(newTransactionsArrayList);
 
@@ -59,9 +60,9 @@ public class DatabaseCheckingThreadTest {
     ChatStateMachineMock chatStateMachineMock2 = (ChatStateMachineMock)chatStateMachinesManagerMock.getOrCreateChatStateMachine(CHAT_ID_2);
 
     // Run DatabaseCheckingThread
-    final LocalDateTime localDateTimeBeforeRun = LocalDateTime.now();
+    final OffsetDateTime offsetDateTimeBeforeRun = OffsetDateTime.now(ZoneOffset.UTC);
     assertNotNull(databaseCheckingThread);
-    assertTrue(databaseCheckingThread.lastChecking().isBefore(localDateTimeBeforeRun));
+    assertTrue(databaseCheckingThread.lastChecking().isBefore(offsetDateTimeBeforeRun));
     databaseCheckingThread.run();
 
     // Verify that ChatStateMachines process method have been called with newTransactionsArrayList
@@ -72,7 +73,7 @@ public class DatabaseCheckingThreadTest {
     assertEquals(newTransactionsArrayList, chatStateMachineMock2.processNewTransactionsEventCalls.get(0).getTransactions());
 
     // Verify lastChecking update
-    assertTrue(databaseCheckingThread.lastChecking().isAfter(localDateTimeBeforeRun));
+    assertTrue(databaseCheckingThread.lastChecking().isAfter(offsetDateTimeBeforeRun));
   }
 
   @Test 
@@ -91,9 +92,9 @@ public class DatabaseCheckingThreadTest {
     ChatStateMachineMock chatStateMachineMock2 = (ChatStateMachineMock)chatStateMachinesManagerMock.getOrCreateChatStateMachine(CHAT_ID_2);
 
     // Run DatabaseCheckingThread
-    final LocalDateTime localDateTimeBeforeRun = LocalDateTime.now();
+    final OffsetDateTime offsetDateTimeBeforeRun = OffsetDateTime.now(ZoneOffset.UTC);
     assertNotNull(databaseCheckingThread);
-    assertTrue(databaseCheckingThread.lastChecking().isBefore(localDateTimeBeforeRun));
+    assertTrue(databaseCheckingThread.lastChecking().isBefore(offsetDateTimeBeforeRun));
     databaseCheckingThread.run();
 
     // Verify that ChatStateMachines process method have not been called with newTransactionsArrayList
@@ -101,6 +102,6 @@ public class DatabaseCheckingThreadTest {
     assertEquals(0, chatStateMachineMock2.processNewTransactionsEventCalls.size());
 
     // Verify lastChecking update
-    assertTrue(databaseCheckingThread.lastChecking().isAfter(localDateTimeBeforeRun));
+    assertTrue(databaseCheckingThread.lastChecking().isAfter(offsetDateTimeBeforeRun));
   }
 }

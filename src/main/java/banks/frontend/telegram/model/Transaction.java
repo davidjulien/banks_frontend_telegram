@@ -2,6 +2,7 @@ package banks.frontend.telegram.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public class Transaction {
   public enum TransactionType {
@@ -17,7 +18,7 @@ public class Transaction {
   private String bankId;
   private String clientId;
   private String accountId;
-  private LocalDateTime fetchingAt;
+  private OffsetDateTime fetchingAt;
   private String transactionId;
   private LocalDate accountingDate;
   private LocalDate effectiveDate;
@@ -25,7 +26,7 @@ public class Transaction {
   private String description;
   private TransactionType transactionType;
 
-  public Transaction(long id, String bankId, String clientId, String accountId, LocalDateTime fetchingAt, String transactionId, LocalDate accountingDate, LocalDate effectiveDate, double amount, String description, TransactionType transactionType) {
+  public Transaction(long id, String bankId, String clientId, String accountId, OffsetDateTime fetchingAt, String transactionId, LocalDate accountingDate, LocalDate effectiveDate, double amount, String description, TransactionType transactionType) {
     this.id = id;
     this.bankId = bankId;
     this.clientId = clientId;
@@ -38,4 +39,9 @@ public class Transaction {
     this.description = description;
     this.transactionType = transactionType;
   }
+
+  public String toMarkdownString() {
+    return String.format("*%s*                        *%.2f €*\n%s", this.effectiveDate.toString(), this.amount, this.description);
+  }
+
 }

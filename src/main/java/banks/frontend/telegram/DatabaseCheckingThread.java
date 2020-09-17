@@ -3,7 +3,10 @@ package banks.frontend.telegram;
 import banks.frontend.telegram.model.Transaction;
 
 import java.util.ArrayList;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 
 /**
  * DatabaseCheckingThread is a runnable process which verify if new transactions are available in database.
@@ -12,21 +15,21 @@ public class DatabaseCheckingThread implements Runnable {
   private final ChatStateMachinesManager chatStateMachinesManager;
   private final Storage storage;
 
-  private LocalDateTime lastChecking;
+  private OffsetDateTime lastChecking;
 
   public DatabaseCheckingThread(ChatStateMachinesManager chatStateMachinesManager, Storage storage) {
     this.chatStateMachinesManager = chatStateMachinesManager;
     this.storage = storage;
-    this.lastChecking = LocalDateTime.of(2020,9,10,0,0,0);
+    this.lastChecking = OffsetDateTime.of(LocalDate.now(), java.time.LocalTime.of(0,0), ZoneOffset.UTC);
   }
 
-  public LocalDateTime lastChecking() {
+  public OffsetDateTime lastChecking() {
     return this.lastChecking;
   }
 
   public void run() {
-    System.out.println("[" + LocalDateTime.now() + "] Check database for new transactions");
-    final LocalDateTime newLastChecking = LocalDateTime.now(); // Get current time before checking for new transactions
+    System.out.println("[" + OffsetDateTime.now(ZoneOffset.UTC) + "] Check database for new transactions");
+    final OffsetDateTime newLastChecking = OffsetDateTime.now(ZoneOffset.UTC); // Get current time before checking for new transactions
     final ArrayList<Transaction> transactions = this.storage.getNewTransactionsSince(this.lastChecking);
 
     if (transactions.isEmpty()) {

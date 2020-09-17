@@ -4,6 +4,9 @@ import banks.frontend.telegram.model.Transaction;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -163,9 +166,9 @@ public class ChatStateMachineTest {
     bot.verifyExecuteCall(1, CHAT_ID, MESSAGE + " !");
   }
 
-  // ChatStateMachine processes NewTransactionsEvent
+  // ChatStateMachine processes NewTransactionsEvent with 1 transaction
   @Test
-  public void shouldFeedbackNewTransactionsEventToUser() {
+  public void shouldFeedbackNewTransactionsEventWith1TransactionToUser() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
     final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.ECHO);
@@ -173,7 +176,65 @@ public class ChatStateMachineTest {
     // Verify that ChatStateMachine is in ECHO state
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
 
-    NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(new ArrayList<Transaction>());
+    // Process NewTransactionsEvent
+    final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+    final Transaction transaction = new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description", Transaction.TransactionType.SEPA_DEBIT);
+    transactions.add(transaction);
+    final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
+
+    csm.process(newTransactionsEvent);
+
+    // Verify that ChatStateMachine remains in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Verify that ChatStateMachine sends a message containing information related to new transactions
+    assertEquals(2, bot.executeCalls.size());
+    bot.verifyExecuteCall(0, CHAT_ID, "1 new transaction identified.");
+    bot.verifyExecuteCall(1, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription");
+  }
+
+  // ChatStateMachine processes NewTransactionsEvent with 2 transactions
+  @Test
+  public void shouldFeedbackNewTransactionsEventWith2TransactionsToUser() {
+    final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.ECHO);
+
+    // Verify that ChatStateMachine is in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Process NewTransactionsEvent
+    final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+    transactions.add(new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT));
+    transactions.add(new Transaction(2, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT));
+    final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
+
+    csm.process(newTransactionsEvent);
+
+    // Verify that ChatStateMachine remains in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Verify that ChatStateMachine sends a message containing information related to new transactions and one message for each transactions descriptions
+    assertEquals(3, bot.executeCalls.size());
+    bot.verifyExecuteCall(0, CHAT_ID, "2 new transactions identified.");
+    bot.verifyExecuteCall(1, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription 1");
+    bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *98.12 €*\ndescription 2");
+  }
+
+  // ChatStateMachine processes NewTransactionsEvent with 0 transactions. It allows to test that ChatStateMachine does not send a message containing only "Transactions:"
+  @Test
+  public void shouldFeedbackNewTransactionsEventWith0TransactionToUser() {
+    final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.ECHO);
+
+    // Verify that ChatStateMachine is in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Process NewTransactionsEvent
+    final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+    final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
+
     csm.process(newTransactionsEvent);
 
     // Verify that ChatStateMachine remains in ECHO state
@@ -181,7 +242,7 @@ public class ChatStateMachineTest {
 
     // Verify that ChatStateMachine sends a message containing information related to new transactions
     assertEquals(1, bot.executeCalls.size());
-    bot.verifyExecuteCall(0, CHAT_ID, "0 new transaction(s) identified.");
+    bot.verifyExecuteCall(0, CHAT_ID, "0 new transaction identified.");
   }
 
 
