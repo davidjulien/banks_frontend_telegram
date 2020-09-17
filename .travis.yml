@@ -6,7 +6,7 @@ jdk:
 services: postgresql
 
 before_script:
-  - psql -c 'CREATE ROLE banks_fetch_test LOGIN; ALTER USER banks_fetch_test WITH SUPERUSER;' -U postgres
+  - psql -c 'CREATE ROLE banks_fetch_user LOGIN; ALTER USER banks_fetch_user WITH SUPERUSER;' -U postgres
 before_install:
   - "test x\"$TRAVIS_POSTGRESQL_VERSION\" = x\"\" || (sudo service postgresql stop && sudo service postgresql start $TRAVIS_POSTGRESQL_VERSION)"
 
