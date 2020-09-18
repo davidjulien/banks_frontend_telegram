@@ -11,13 +11,15 @@ import com.pengrad.telegrambot.TelegramBot;
 public class ChatStateMachinesManager {
   private final Configuration configuration;
   private final TelegramBot bot;
+  private final Storage storage;
 
   /* Map telegram chatId to ChatStateMachine */
   private final HashMap<Long, ChatStateMachine> chatIdToChatStateMachines;
 
-  public ChatStateMachinesManager(Configuration configuration, TelegramBot bot) {
+  public ChatStateMachinesManager(Configuration configuration, TelegramBot bot, Storage storage) {
     this.configuration = configuration;
     this.bot = bot;
+    this.storage = storage;
     this.chatIdToChatStateMachines = new HashMap<Long, ChatStateMachine>();
   }
 
@@ -31,7 +33,7 @@ public class ChatStateMachinesManager {
     if (csm != null) {
       return csm;
     } else {
-      csm = new ChatStateMachine(this.configuration, this.bot, chatId);
+      csm = new ChatStateMachine(this.configuration, this.bot, this.storage, chatId);
       this.chatIdToChatStateMachines.put((Long)chatId, csm);
       return csm;
     }

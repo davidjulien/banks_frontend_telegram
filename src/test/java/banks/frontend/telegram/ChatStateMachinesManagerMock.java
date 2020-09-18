@@ -15,8 +15,8 @@ import com.pengrad.telegrambot.model.Update;
 public class ChatStateMachinesManagerMock extends ChatStateMachinesManager {
   public final HashMap<Long, ChatStateMachineMock> getOrCreateCalls;
 
-  public ChatStateMachinesManagerMock(Configuration configuration, TelegramBot bot) {
-    super(configuration, bot);
+  public ChatStateMachinesManagerMock(Configuration configuration, TelegramBot bot, Storage storage) {
+    super(configuration, bot, storage);
     this.getOrCreateCalls = new HashMap<Long, ChatStateMachineMock>();
   }
 

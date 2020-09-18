@@ -36,13 +36,13 @@ public class App {
     Configuration configuration = loadConfiguration();
     if (configuration != null) {
       final TelegramBot bot = new TelegramBot(configuration.botToken());
-      final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot);
       final Storage storage = new Storage(setupDatabase());
 
       // Try to connect to database
       if (!storage.connect()) {
         System.err.println("Unable to connect to database");
       } else {
+        final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot, storage);
         // Check database periodically
         final DatabaseCheckingThread databaseCheckingThread = new DatabaseCheckingThread(chatStateMachinesManager, storage);
         final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();

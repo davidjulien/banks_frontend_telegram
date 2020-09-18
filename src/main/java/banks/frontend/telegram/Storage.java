@@ -77,7 +77,7 @@ public class Storage {
     PreparedStatement st = null;
     try {
       con = this.dataSource.getConnection();
-      st = con.prepareStatement("SELECT id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type FROM transactions WHERE fetching_at > ?");
+      st = con.prepareStatement("SELECT id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type FROM transactions WHERE fetching_at > ? ORDER BY bank_id, client_id, account_id, effective_date DESC, fetching_position DESC;");
       st.setObject(1, lastChecking.toLocalDateTime()); // Because we store timestamp without time zone values
       System.out.println("Query="+st);
       ResultSet rs = st.executeQuery();

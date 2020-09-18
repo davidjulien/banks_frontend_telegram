@@ -40,6 +40,18 @@ public class Transaction {
     this.transactionType = transactionType;
   }
 
+  public String getBankId() {
+    return this.bankId;
+  }
+
+  public String getClientId() {
+    return this.clientId;
+  }
+
+  public String getAccountId() {
+    return this.accountId;
+  }
+
   public String toMarkdownString() {
     return String.format("*%s*                        *%.2f €*\n%s", this.effectiveDate.toString(), this.amount, this.description);
   }

@@ -29,7 +29,8 @@ public class BanksUpdatesListenerTest
   public void shouldCreateBanksUpdateListener() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot);
+    final Storage storage = new Storage(null);
+    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot, storage);
     BanksUpdatesListener listener = new BanksUpdatesListener(configuration, bot, chatStateMachinesManager);
     assertNotNull(listener);
   }
@@ -38,7 +39,8 @@ public class BanksUpdatesListenerTest
   public void shouldCreateChatStateMachineAndProcessUpdate() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot);
+    final Storage storage = new Storage(null);
+    final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot, storage);
     BanksUpdatesListener listener = new BanksUpdatesListener(configuration, bot, chatStateMachinesManagerMock);
 
     /* List of updates */

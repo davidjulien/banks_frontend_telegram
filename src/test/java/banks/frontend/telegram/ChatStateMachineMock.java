@@ -19,7 +19,7 @@ public class ChatStateMachineMock extends ChatStateMachine {
   public final ArrayList<NewTransactionsEvent> processNewTransactionsEventCalls;
 
   public ChatStateMachineMock(long chatId) {
-    super(null, null, chatId);
+    super(null, null, null, chatId);
     this.chatId = chatId;
     this.processCalls = new ArrayList<Update>();
     this.processNewTransactionsEventCalls = new ArrayList<NewTransactionsEvent>();
@@ -33,5 +33,3 @@ public class ChatStateMachineMock extends ChatStateMachine {
     this.processNewTransactionsEventCalls.add(newTransactionsEvent);
   }
 }
-
-

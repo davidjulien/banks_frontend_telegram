@@ -46,7 +46,8 @@ public class DatabaseCheckingThreadTest {
   public void shouldCallAllChatStateMachines() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot);
+    final Storage storage = new Storage(null);
+    final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot, storage);
     final ArrayList<Transaction> newTransactionsArrayList = new ArrayList<Transaction>();
     final Transaction fakeTransaction = new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction", LocalDate.now(), LocalDate.now(), 123.45, "descriiption", Transaction.TransactionType.SEPA_DEBIT);
     newTransactionsArrayList.add(fakeTransaction);
@@ -80,9 +81,9 @@ public class DatabaseCheckingThreadTest {
   public void shouldNotCallAllChatStateMachinesWhenThereIsNoTransactions() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot);
     final ArrayList<Transaction> newTransactionsArrayList = new ArrayList<Transaction>();
     final StorageMock storageMock = new StorageMock(newTransactionsArrayList);
+    final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot, storageMock);
 
     assertNotNull(chatStateMachinesManagerMock);
     DatabaseCheckingThread databaseCheckingThread = new DatabaseCheckingThread(chatStateMachinesManagerMock, storageMock);

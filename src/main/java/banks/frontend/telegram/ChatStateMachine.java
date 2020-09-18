@@ -1,5 +1,7 @@
 package banks.frontend.telegram;
 
+import banks.frontend.telegram.model.Transaction;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,19 +32,21 @@ public class ChatStateMachine {
 
   private final Configuration configuration;
   private final TelegramBot bot;
+  private final Storage storage;
   private final long chatId;
   private StateName currentStateName;
 
   // Expected command in INIT state.
   private static Pattern INIT_PATTERN = Pattern.compile("^/init (.*)$");
 
-  public ChatStateMachine(Configuration configuration, TelegramBot bot, long chatId) {
-    this(configuration, bot, chatId, StateName.INIT);
+  public ChatStateMachine(Configuration configuration, TelegramBot bot, Storage storage, long chatId) {
+    this(configuration, bot, storage, chatId, StateName.INIT);
   }
 
-  ChatStateMachine(Configuration configuration, TelegramBot bot, long chatId, StateName currentStateName) {
+  ChatStateMachine(Configuration configuration, TelegramBot bot, Storage storage, long chatId, StateName currentStateName) {
     this.configuration = configuration;
     this.bot = bot;
+    this.storage = storage;
     this.chatId = chatId;
     this.currentStateName = currentStateName;
   }
@@ -111,12 +115,24 @@ public class ChatStateMachine {
     final String withOrWithoutS = nbrTransactions <= 1 ? "" : "s";
     bot.execute(new SendMessage(chatId, newTransactionsEvent.getTransactions().size() + " new transaction" + withOrWithoutS + " identified."));
 
+    // Send one message with account balance each time current transaction not belongs to the same account than previous transaction.
     // Send one message for each transaction
-    newTransactionsEvent.getTransactions().forEach((transaction) -> {
+    String bankId = null;
+    String clientId = null;
+    String accountId = null;
+    for(Transaction transaction : newTransactionsEvent.getTransactions()) {
+      if (! (transaction.getBankId().equals(bankId) && transaction.getClientId().equals(clientId) && transaction.getAccountId().equals(accountId))) {
+        bankId = transaction.getBankId();
+        clientId = transaction.getClientId();
+        accountId = transaction.getAccountId();
+        double balance = storage.getAccountBalance(bankId, clientId, accountId);
+        bot.execute(new SendMessage(chatId, String.format("New balance: %.2f €", balance)));
+      }
+
       final String transactionDescription = transaction.toMarkdownString();
       // We suppose that we don't have description longer than MAX_MESSAGE_LENGTH..
       BaseResponse baseResponse = bot.execute(new SendMessage(chatId, transactionDescription).parseMode(ParseMode.Markdown));
       System.err.println("BaseResponse="+baseResponse.toString()+"-"+baseResponse.isOk()+"-"+baseResponse.errorCode()+"-"+baseResponse.description());
-    });
+    }
   }
 }

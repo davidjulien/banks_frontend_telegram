@@ -34,7 +34,8 @@ public class ChatStateMachinesManagerTest
   public void shouldNotDuplicateChatStateMachineForSameChatIds() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot);
+    final Storage storage = new Storage(null);
+    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot, storage);
 
     final ChatStateMachine csm1 = chatStateMachinesManager.getOrCreateChatStateMachine(CHAT_ID_1);
     assertNotNull(csm1);
@@ -47,7 +48,8 @@ public class ChatStateMachinesManagerTest
   public void shouldCreate2ChatStateMachinesFor2DifferentChatIds() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot);
+    final Storage storage = new Storage(null);
+    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot, storage);
 
     final ChatStateMachine csm1 = chatStateMachinesManager.getOrCreateChatStateMachine(CHAT_ID_1);
     assertNotNull(csm1);
@@ -60,7 +62,8 @@ public class ChatStateMachinesManagerTest
   public void shouldGetAllChatStateMachines() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot);
+    final Storage storage = new Storage(null);
+    final ChatStateMachinesManager chatStateMachinesManager = new ChatStateMachinesManager(configuration, bot, storage);
 
     final ChatStateMachine csm1 = chatStateMachinesManager.getOrCreateChatStateMachine(CHAT_ID_1);
     final ChatStateMachine csm2 = chatStateMachinesManager.getOrCreateChatStateMachine(CHAT_ID_2);
@@ -75,6 +78,4 @@ public class ChatStateMachinesManagerTest
     assertTrue(allChatStateMachinesArrayList.contains(csm3));
     assertTrue(allChatStateMachinesArrayList.contains(csm4));
   }
-
-
 }

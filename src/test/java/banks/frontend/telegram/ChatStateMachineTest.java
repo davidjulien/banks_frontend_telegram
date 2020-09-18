@@ -35,7 +35,8 @@ public class ChatStateMachineTest {
   public void shouldInitChatStateMachine() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
+    Storage storage = new Storage(null);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID);
 
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
     assertEquals(0, bot.executeCalls.size());
@@ -47,7 +48,8 @@ public class ChatStateMachineTest {
   public void shouldSwitchToEchoFromInitAfterSecurityCodeValidation() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
+    Storage storage = new Storage(null);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID);
 
     Update initUpdate = buildUpdateWithMessage(CHAT_ID, "/init " + SECURITY_CODE);
 
@@ -65,7 +67,8 @@ public class ChatStateMachineTest {
   public void shouldRemainInInitAfterInvalidSecurityCode() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     TelegramBot bot = new TelegramBot(BOT_TOKEN);
-    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
+    Storage storage = new Storage(null);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID);
 
     Update initUpdate = buildUpdateWithMessage(CHAT_ID, "/init blabla");
 
@@ -78,7 +81,8 @@ public class ChatStateMachineTest {
   public void shouldRemainInInitAfterInvalidCommand() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
+    Storage storage = new Storage(null);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID);
 
     Update initUpdate = buildUpdateWithMessage(CHAT_ID, "other message");
 
@@ -95,7 +99,8 @@ public class ChatStateMachineTest {
   public void shouldGoBackToInitFromAnInvalidState() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
+    Storage storage = new Storage(null);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
 
     assertEquals(ChatStateMachine.StateName.INVALID_STATE, csm.currentStateName());
     assertEquals(0, bot.executeCalls.size());
@@ -115,7 +120,8 @@ public class ChatStateMachineTest {
   public void shouldDoNothingInInitWhenNewTransactionsAreAvailable() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
+    Storage storage = new Storage(null);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID);
 
     NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(new ArrayList<Transaction>());
 
@@ -139,7 +145,8 @@ public class ChatStateMachineTest {
   public void shouldEchoMessage() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID);
+    Storage storage = new Storage(null);
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID);
 
     // Verify that ChatStateMachine is in INIT state
     assertEquals(ChatStateMachine.StateName.INIT, csm.currentStateName());
@@ -166,12 +173,31 @@ public class ChatStateMachineTest {
     bot.verifyExecuteCall(1, CHAT_ID, MESSAGE + " !");
   }
 
+  class StorageMock extends Storage {
+    private double[] balance;
+    private int index;
+
+    // Build with array of balances to return
+    public StorageMock(double[] balance) {
+      super(null);
+      this.balance = balance;
+      this.index = 0;
+    }
+
+    // Increment index to return next balance after each call
+    public double getAccountBalance(String bankId, String clientId, String accountId) {
+      return this.balance[this.index++];
+    }
+  }
+
+
   // ChatStateMachine processes NewTransactionsEvent with 1 transaction
   @Test
   public void shouldFeedbackNewTransactionsEventWith1TransactionToUser() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.ECHO);
+    final StorageMock storage = new StorageMock(new double[]{435.65});
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
 
     // Verify that ChatStateMachine is in ECHO state
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
@@ -188,17 +214,19 @@ public class ChatStateMachineTest {
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
 
     // Verify that ChatStateMachine sends a message containing information related to new transactions
-    assertEquals(2, bot.executeCalls.size());
+    assertEquals(3, bot.executeCalls.size());
     bot.verifyExecuteCall(0, CHAT_ID, "1 new transaction identified.");
-    bot.verifyExecuteCall(1, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription");
+    bot.verifyExecuteCall(1, CHAT_ID, "New balance: 435.65 €");
+    bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription");
   }
 
-  // ChatStateMachine processes NewTransactionsEvent with 2 transactions
+  // ChatStateMachine processes NewTransactionsEvent with 2 transactions from same account
   @Test
   public void shouldFeedbackNewTransactionsEventWith2TransactionsToUser() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.ECHO);
+    final StorageMock storage = new StorageMock(new double[]{435.65});
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
 
     // Verify that ChatStateMachine is in ECHO state
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
@@ -215,18 +243,83 @@ public class ChatStateMachineTest {
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
 
     // Verify that ChatStateMachine sends a message containing information related to new transactions and one message for each transactions descriptions
-    assertEquals(3, bot.executeCalls.size());
+    assertEquals(4, bot.executeCalls.size());
     bot.verifyExecuteCall(0, CHAT_ID, "2 new transactions identified.");
-    bot.verifyExecuteCall(1, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription 1");
-    bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *98.12 €*\ndescription 2");
+    bot.verifyExecuteCall(1, CHAT_ID, "New balance: 435.65 €");
+    bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription 1");
+    bot.verifyExecuteCall(3, CHAT_ID, "*2020-09-11*                        *98.12 €*\ndescription 2");
   }
+
+  // ChatStateMachine processes NewTransactionsEvent with 2 transactions from different accounts
+  @Test
+  public void shouldFeedbackNewTransactionsEventWith2TransactionsFrom2AccountsToUser() {
+    final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
+    final StorageMock storage = new StorageMock(new double[]{435.65,3367.10});
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
+
+    // Verify that ChatStateMachine is in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Process NewTransactionsEvent
+    final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+    transactions.add(new Transaction(1, "ing", "client", "acccount1", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT));
+    transactions.add(new Transaction(2, "ing", "client", "acccount2", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT));
+    final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
+
+    csm.process(newTransactionsEvent);
+
+    // Verify that ChatStateMachine remains in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Verify that ChatStateMachine sends a message containing information related to new transactions and one message for each transactions descriptions
+    assertEquals(5, bot.executeCalls.size());
+    bot.verifyExecuteCall(0, CHAT_ID, "2 new transactions identified.");
+    bot.verifyExecuteCall(1, CHAT_ID, "New balance: 435.65 €");
+    bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription 1");
+    bot.verifyExecuteCall(3, CHAT_ID, "New balance: 3367.10 €");
+    bot.verifyExecuteCall(4, CHAT_ID, "*2020-09-11*                        *98.12 €*\ndescription 2");
+  }
+
+  // ChatStateMachine processes NewTransactionsEvent with 2 transactions from different clients
+  @Test
+  public void shouldFeedbackNewTransactionsEventWith2TransactionsFrom2ClientsToUser() {
+    final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
+    final StorageMock storage = new StorageMock(new double[]{435.65,3367.10});
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
+
+    // Verify that ChatStateMachine is in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Process NewTransactionsEvent
+    final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+    transactions.add(new Transaction(1, "ing", "client1", "acccount1", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT));
+    transactions.add(new Transaction(2, "ing", "client2", "acccount2", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT));
+    final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
+
+    csm.process(newTransactionsEvent);
+
+    // Verify that ChatStateMachine remains in ECHO state
+    assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
+
+    // Verify that ChatStateMachine sends a message containing information related to new transactions and one message for each transactions descriptions
+    assertEquals(5, bot.executeCalls.size());
+    bot.verifyExecuteCall(0, CHAT_ID, "2 new transactions identified.");
+    bot.verifyExecuteCall(1, CHAT_ID, "New balance: 435.65 €");
+    bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription 1");
+    bot.verifyExecuteCall(3, CHAT_ID, "New balance: 3367.10 €");
+    bot.verifyExecuteCall(4, CHAT_ID, "*2020-09-11*                        *98.12 €*\ndescription 2");
+  }
+
 
   // ChatStateMachine processes NewTransactionsEvent with 0 transactions. It allows to test that ChatStateMachine does not send a message containing only "Transactions:"
   @Test
   public void shouldFeedbackNewTransactionsEventWith0TransactionToUser() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.ECHO);
+    final Storage storage = new Storage(null);
+    final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
 
     // Verify that ChatStateMachine is in ECHO state
     assertEquals(ChatStateMachine.StateName.ECHO, csm.currentStateName());
@@ -255,7 +348,8 @@ public class ChatStateMachineTest {
   public void shouldGoBackToInitWithFeedbackFromAnInvalidStateWithUserEvent() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
+    Storage storage = new Storage(null);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
 
     assertEquals(ChatStateMachine.StateName.INVALID_STATE, csm.currentStateName());
     assertEquals(0, bot.executeCalls.size());
@@ -277,7 +371,8 @@ public class ChatStateMachineTest {
   public void shouldGoBackToInitWithoutFeedbackFromAnInvalidStateWithDatabaseEvent() {
     Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    ChatStateMachine csm = new ChatStateMachine(configuration, bot, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
+    Storage storage = new Storage(null);
+    ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.INVALID_STATE);
 
     assertEquals(ChatStateMachine.StateName.INVALID_STATE, csm.currentStateName());
     assertEquals(0, bot.executeCalls.size());
