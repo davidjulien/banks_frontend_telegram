@@ -1,0 +1,7 @@
+INSERT INTO clients(bank_id, client_id, client_credential) VALUES ('ing', '121212', ''::BYTEA);
+INSERT INTO accounts(bank_id, client_id, fetching_at, account_id, balance, number, owner, ownership, type, name) VALUES ('ing', '121212', '2020-09-16 09:00:00', '5656', 1433.44, 'NUMBER', 'OWNER', 'single', 'current', 'NAME');
+INSERT INTO accounts(bank_id, client_id, fetching_at, account_id, balance, number, owner, ownership, type, name) VALUES ('ing', '121212', '2020-09-16 09:00:00', '33', 33.33, 'NUMBER', 'OWNER', 'single', 'current', 'NAME');
+INSERT INTO accounts(bank_id, client_id, fetching_at, account_id, balance, number, owner, ownership, type, name) VALUES ('ing', '121212', '2020-09-17 09:00:00', '5656', 1555.55, 'NUMBER', 'OWNER', 'single', 'current', 'NAME');
+INSERT INTO accounts(bank_id, client_id, fetching_at, account_id, balance, number, owner, ownership, type, name) VALUES ('ing', '121212', '2020-09-17 09:00:00', '33', 33.33, 'NUMBER', 'OWNER', 'single', 'current', 'NAME');
+INSERT INTO accounts(bank_id, client_id, fetching_at, account_id, balance, number, owner, ownership, type, name) VALUES ('ing', '121212', '2020-09-18 09:00:00', '33', 33.33, 'NUMBER', 'OWNER', 'single', 'current', 'NAME');
+INSERT INTO accounts(bank_id, client_id, fetching_at, account_id, balance, number, owner, ownership, type, name) VALUES ('ing', '121212', '2020-09-18 09:00:00', '5656', 1234.56, 'NUMBER', 'OWNER', 'single', 'current', 'NAME');

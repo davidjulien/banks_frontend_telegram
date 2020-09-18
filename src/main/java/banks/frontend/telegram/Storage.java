@@ -99,4 +99,33 @@ public class Storage {
     }
   }
 
+  /**
+   * Fetch current balance related to a bank account.
+   * @param bankId      bankId
+   * @param clientId    clientId
+   * @param accountId   accountId
+   * @return Balance value or NaN (account not found or SQL error)
+   */
+  public double getAccountBalance(String bankId, String clientId, String accountId) {
+    Connection con = null;
+    PreparedStatement st = null;
+    try {
+      con = this.dataSource.getConnection();
+      st = con.prepareStatement("SELECT balance FROM accounts WHERE bank_id = ? and client_id = ? and account_id = ? ORDER BY fetching_at DESC LIMIT 1");
+      st.setString(1, bankId);
+      st.setString(2, clientId);
+      st.setString(3, accountId);
+      ResultSet rs = st.executeQuery();
+      if(rs.next()) {
+        return rs.getDouble(1);
+      } else {
+        return Double.NaN;
+      }
+    } catch (SQLException ex) {
+      System.err.println("Unable to get balance : " + ex.getMessage());
+      return Double.NaN;
+    } finally {
+      close(con, st);
+    }
+  }
 }

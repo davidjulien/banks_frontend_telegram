@@ -94,6 +94,15 @@ public class StorageTest {
     assertNull(storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,8,0,0,0,ZoneOffset.UTC)));
   }
 
+  @Test
+  public void shouldReturnNaNIfgetAccountBalanceFailed() throws Exception {
+    assertNotNull(ds);
+    when(ds.getConnection()).thenThrow(SQLException.class);
+
+    // Verify that we don't have a list in case of SQL errors
+    Storage storage = new Storage(ds);
+    assertEquals(Double.NaN, storage.getAccountBalance("ing", "CLIENT_ID", "ACCOUNT_ID"), 0.01);
+  }
 
   // Tests on real test database
 
@@ -168,4 +177,19 @@ public class StorageTest {
     transactions = storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,6,0,0,0, ZoneOffset.UTC));
     assertEquals(2, transactions.size());
   }
+
+  @Test
+  public void shouldGetAccountBalance() throws Exception {
+    PGSimpleDataSource banksDataSource = setupDatabase();
+    Storage storage = new Storage(banksDataSource);
+    assertTrue(storage.connect());
+
+    // Setup tests content
+    importSQLFromFile(banksDataSource, "src/test/resources/setup_db_for_getAccountBalance.sql");
+
+    // Tests
+    assertEquals(1234.56, storage.getAccountBalance("ing", "121212", "5656"), 0.01);
+    assertEquals(Double.NaN, storage.getAccountBalance("ing", "NO_CLIENT", "NO_ACCOUNT"), 0.01);
+  }
+
 }
