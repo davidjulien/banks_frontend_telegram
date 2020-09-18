@@ -26,9 +26,11 @@ public class Storage {
   }
 
   public boolean connect() {
+    Connection con = null;
+    Statement st = null;
     try {
-      Connection con = this.dataSource.getConnection();
-      Statement st = con.createStatement();
+      con = this.dataSource.getConnection();
+      st = con.createStatement();
       ResultSet rs = st.executeQuery("SELECT version FROM apps WHERE name = 'banks_frontend_telegram'");
 
       String version;
@@ -43,10 +45,27 @@ public class Storage {
     } catch (SQLException ex) {
       System.err.println("Unable to connect : " + ex.getMessage());
       return false;
+    } finally {
+      close(con, st);
     }
   }
 
   //  Files.find("resources/",1, (path, basicFileAttributes) -> path.toFile().getName().matches(version+"_.*.sql"));
+
+  /**
+   * This method closes Connection and Statement objects.
+   */
+  private void close(Connection con, Statement st) {
+    try {
+      con.close();
+    } catch (Exception e) {
+    }
+    try {
+      st.close();
+    } catch (Exception e) {
+    }
+  }
+
 
   /**
    * Fetch new transactions since lastChecking.
@@ -54,9 +73,11 @@ public class Storage {
    * @return list of transactions
    */
   public ArrayList<Transaction> getNewTransactionsSince(OffsetDateTime lastChecking) {
+    Connection con = null;
+    PreparedStatement st = null;
     try {
-      Connection con = this.dataSource.getConnection();
-      PreparedStatement st = con.prepareStatement("SELECT id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type FROM transactions WHERE fetching_at > ?");
+      con = this.dataSource.getConnection();
+      st = con.prepareStatement("SELECT id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type FROM transactions WHERE fetching_at > ?");
       st.setObject(1, lastChecking.toLocalDateTime()); // Because we store timestamp without time zone values
       System.out.println("Query="+st);
       ResultSet rs = st.executeQuery();
@@ -73,6 +94,9 @@ public class Storage {
     } catch (SQLException ex) {
       System.err.println("Unable to get new transactions : " + ex.getMessage());
       return null;
+    } finally {
+      close(con, st);
     }
   }
+
 }
