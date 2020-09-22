@@ -23,8 +23,4 @@ public class Bank {
       return false;
     }
   }
-
-  public String toString() {
-    return "Bank("+this.id+","+this.name+")";
-  }
 }
