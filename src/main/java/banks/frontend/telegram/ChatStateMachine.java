@@ -1,6 +1,7 @@
 package banks.frontend.telegram;
 
 import banks.frontend.telegram.model.Transaction;
+import banks.frontend.telegram.model.Account;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -125,14 +126,13 @@ public class ChatStateMachine {
         bankId = transaction.getBankId();
         clientId = transaction.getClientId();
         accountId = transaction.getAccountId();
-        double balance = storage.getAccountBalance(bankId, clientId, accountId);
-        bot.execute(new SendMessage(chatId, String.format("New balance: %.2f €", balance)));
+        Account account = storage.getAccount(bankId, clientId, accountId);
+        bot.execute(new SendMessage(chatId, String.format("%s/%s: %.2f €", account.getBank().getName(), account.getName(), account.getBalance())));
       }
 
       final String transactionDescription = transaction.toMarkdownString();
       // We suppose that we don't have description longer than MAX_MESSAGE_LENGTH..
-      BaseResponse baseResponse = bot.execute(new SendMessage(chatId, transactionDescription).parseMode(ParseMode.Markdown));
-      System.err.println("BaseResponse="+baseResponse.toString()+"-"+baseResponse.isOk()+"-"+baseResponse.errorCode()+"-"+baseResponse.description());
+      bot.execute(new SendMessage(chatId, transactionDescription).parseMode(ParseMode.Markdown));
     }
   }
 }

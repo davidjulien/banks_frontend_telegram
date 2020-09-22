@@ -17,6 +17,8 @@ import javax.sql.DataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import banks.frontend.telegram.model.Transaction;
+import banks.frontend.telegram.model.Account;
+import banks.frontend.telegram.model.Bank;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
@@ -95,14 +97,15 @@ public class StorageTest {
   }
 
   @Test
-  public void shouldReturnNaNIfgetAccountBalanceFailed() throws Exception {
+  public void shouldReturnNaNIfgetAccountFailed() throws Exception {
     assertNotNull(ds);
     when(ds.getConnection()).thenThrow(SQLException.class);
 
     // Verify that we don't have a list in case of SQL errors
     Storage storage = new Storage(ds);
-    assertEquals(Double.NaN, storage.getAccountBalance("ing", "CLIENT_ID", "ACCOUNT_ID"), 0.01);
+    assertNull(storage.getAccount("ing", "CLIENT_ID", "ACCOUNT_ID"));
   }
+
 
   // Tests on real test database
 
@@ -179,17 +182,18 @@ public class StorageTest {
   }
 
   @Test
-  public void shouldGetAccountBalance() throws Exception {
+  public void shouldGetAccount() throws Exception {
     PGSimpleDataSource banksDataSource = setupDatabase();
     Storage storage = new Storage(banksDataSource);
     assertTrue(storage.connect());
 
     // Setup tests content
-    importSQLFromFile(banksDataSource, "src/test/resources/setup_db_for_getAccountBalance.sql");
+    importSQLFromFile(banksDataSource, "src/test/resources/setup_db_for_getAccount.sql");
 
     // Tests
-    assertEquals(1234.56, storage.getAccountBalance("ing", "121212", "5656"), 0.01);
-    assertEquals(Double.NaN, storage.getAccountBalance("ing", "NO_CLIENT", "NO_ACCOUNT"), 0.01);
+    Account account = storage.getAccount("ing", "121212", "5656");
+    assertEquals(new Account(new Bank("ing","ING"), "121212", OffsetDateTime.of(2020,9,18,9,0,0,0,ZoneOffset.UTC), "5656", 1234.56, "NUMBER", "OWNER", Account.AccountOwnership.SINGLE, Account.AccountType.CURRENT, "NAME"),
+        account);
+    assertNull(storage.getAccount("ing", "NO_CLIENT", "NO_ACCOUNT"));
   }
-
 }

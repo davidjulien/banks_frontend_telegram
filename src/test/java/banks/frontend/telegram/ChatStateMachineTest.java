@@ -1,6 +1,8 @@
 package banks.frontend.telegram;
 
 import banks.frontend.telegram.model.Transaction;
+import banks.frontend.telegram.model.Account;
+import banks.frontend.telegram.model.Bank;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -174,19 +176,19 @@ public class ChatStateMachineTest {
   }
 
   class StorageMock extends Storage {
-    private double[] balance;
+    private Account[] accounts;
     private int index;
 
     // Build with array of balances to return
-    public StorageMock(double[] balance) {
+    public StorageMock(Account[] accounts) {
       super(null);
-      this.balance = balance;
+      this.accounts = accounts;
       this.index = 0;
     }
 
     // Increment index to return next balance after each call
-    public double getAccountBalance(String bankId, String clientId, String accountId) {
-      return this.balance[this.index++];
+    public Account getAccount(String bankId, String clientId, String accountId) {
+      return this.accounts[this.index++];
     }
   }
 
@@ -196,7 +198,8 @@ public class ChatStateMachineTest {
   public void shouldFeedbackNewTransactionsEventWith1TransactionToUser() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    final StorageMock storage = new StorageMock(new double[]{435.65});
+    final Account account = new Account(new Bank("ing", "ING"), "client", OffsetDateTime.now(ZoneOffset.UTC), "account", 435.65, "NUMBER", "OWNER", Account.AccountOwnership.SINGLE, Account.AccountType.CURRENT, "Compte courant");
+    final StorageMock storage = new StorageMock(new Account[]{account});
     final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
 
     // Verify that ChatStateMachine is in ECHO state
@@ -216,7 +219,7 @@ public class ChatStateMachineTest {
     // Verify that ChatStateMachine sends a message containing information related to new transactions
     assertEquals(3, bot.executeCalls.size());
     bot.verifyExecuteCall(0, CHAT_ID, "1 new transaction identified.");
-    bot.verifyExecuteCall(1, CHAT_ID, "New balance: 435.65 €");
+    bot.verifyExecuteCall(1, CHAT_ID, "ING/Compte courant: 435.65 €");
     bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription");
   }
 
@@ -225,7 +228,8 @@ public class ChatStateMachineTest {
   public void shouldFeedbackNewTransactionsEventWith2TransactionsToUser() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    final StorageMock storage = new StorageMock(new double[]{435.65});
+    final Account account = new Account(new Bank("ing", "ING"), "client", OffsetDateTime.now(ZoneOffset.UTC), "account", 435.65, "NUMBER", "OWNER", Account.AccountOwnership.SINGLE, Account.AccountType.CURRENT, "Compte courant");
+    final StorageMock storage = new StorageMock(new Account[]{account});
     final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
 
     // Verify that ChatStateMachine is in ECHO state
@@ -245,7 +249,7 @@ public class ChatStateMachineTest {
     // Verify that ChatStateMachine sends a message containing information related to new transactions and one message for each transactions descriptions
     assertEquals(4, bot.executeCalls.size());
     bot.verifyExecuteCall(0, CHAT_ID, "2 new transactions identified.");
-    bot.verifyExecuteCall(1, CHAT_ID, "New balance: 435.65 €");
+    bot.verifyExecuteCall(1, CHAT_ID, "ING/Compte courant: 435.65 €");
     bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription 1");
     bot.verifyExecuteCall(3, CHAT_ID, "*2020-09-11*                        *98.12 €*\ndescription 2");
   }
@@ -255,7 +259,9 @@ public class ChatStateMachineTest {
   public void shouldFeedbackNewTransactionsEventWith2TransactionsFrom2AccountsToUser() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    final StorageMock storage = new StorageMock(new double[]{435.65,3367.10});
+    final Account account1 = new Account(new Bank("ing", "ING"), "client", OffsetDateTime.now(ZoneOffset.UTC), "account", 435.65, "NUMBER", "OWNER", Account.AccountOwnership.SINGLE, Account.AccountType.CURRENT, "Compte courant");
+    final Account account2 = new Account(new Bank("ing", "ING"), "client", OffsetDateTime.now(ZoneOffset.UTC), "account", 3367.10, "NUMBER", "OWNER", Account.AccountOwnership.SINGLE, Account.AccountType.SAVINGS, "LIVRET A");
+    final StorageMock storage = new StorageMock(new Account[]{account1,account2});
     final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
 
     // Verify that ChatStateMachine is in ECHO state
@@ -275,9 +281,9 @@ public class ChatStateMachineTest {
     // Verify that ChatStateMachine sends a message containing information related to new transactions and one message for each transactions descriptions
     assertEquals(5, bot.executeCalls.size());
     bot.verifyExecuteCall(0, CHAT_ID, "2 new transactions identified.");
-    bot.verifyExecuteCall(1, CHAT_ID, "New balance: 435.65 €");
+    bot.verifyExecuteCall(1, CHAT_ID, "ING/Compte courant: 435.65 €");
     bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription 1");
-    bot.verifyExecuteCall(3, CHAT_ID, "New balance: 3367.10 €");
+    bot.verifyExecuteCall(3, CHAT_ID, "ING/LIVRET A: 3367.10 €");
     bot.verifyExecuteCall(4, CHAT_ID, "*2020-09-11*                        *98.12 €*\ndescription 2");
   }
 
@@ -286,7 +292,9 @@ public class ChatStateMachineTest {
   public void shouldFeedbackNewTransactionsEventWith2TransactionsFrom2ClientsToUser() {
     final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
     final TelegramBotMock bot = new TelegramBotMock(BOT_TOKEN);
-    final StorageMock storage = new StorageMock(new double[]{435.65,3367.10});
+    final Account account1 = new Account(new Bank("ing", "ING"), "client", OffsetDateTime.now(ZoneOffset.UTC), "account", 435.65, "NUMBER", "OWNER", Account.AccountOwnership.SINGLE, Account.AccountType.CURRENT, "Compte courant");
+    final Account account2 = new Account(new Bank("ing", "ING"), "client", OffsetDateTime.now(ZoneOffset.UTC), "account", 3367.10, "NUMBER", "OWNER", Account.AccountOwnership.SINGLE, Account.AccountType.SAVINGS, "LIVRET A");
+    final StorageMock storage = new StorageMock(new Account[]{account1,account2});
     final ChatStateMachine csm = new ChatStateMachine(configuration, bot, storage, CHAT_ID, ChatStateMachine.StateName.ECHO);
 
     // Verify that ChatStateMachine is in ECHO state
@@ -306,9 +314,9 @@ public class ChatStateMachineTest {
     // Verify that ChatStateMachine sends a message containing information related to new transactions and one message for each transactions descriptions
     assertEquals(5, bot.executeCalls.size());
     bot.verifyExecuteCall(0, CHAT_ID, "2 new transactions identified.");
-    bot.verifyExecuteCall(1, CHAT_ID, "New balance: 435.65 €");
+    bot.verifyExecuteCall(1, CHAT_ID, "ING/Compte courant: 435.65 €");
     bot.verifyExecuteCall(2, CHAT_ID, "*2020-09-11*                        *123.45 €*\ndescription 1");
-    bot.verifyExecuteCall(3, CHAT_ID, "New balance: 3367.10 €");
+    bot.verifyExecuteCall(3, CHAT_ID, "ING/LIVRET A: 3367.10 €");
     bot.verifyExecuteCall(4, CHAT_ID, "*2020-09-11*                        *98.12 €*\ndescription 2");
   }
 

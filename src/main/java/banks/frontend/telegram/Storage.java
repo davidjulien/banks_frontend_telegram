@@ -1,6 +1,8 @@
 package banks.frontend.telegram;
 
 import banks.frontend.telegram.model.Transaction;
+import banks.frontend.telegram.model.Account;
+import banks.frontend.telegram.model.Bank;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -79,12 +81,11 @@ public class Storage {
       con = this.dataSource.getConnection();
       st = con.prepareStatement("SELECT id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type FROM transactions WHERE fetching_at > ? ORDER BY bank_id, client_id, account_id, effective_date DESC, fetching_position DESC;");
       st.setObject(1, lastChecking.toLocalDateTime()); // Because we store timestamp without time zone values
-      System.out.println("Query="+st);
       ResultSet rs = st.executeQuery();
 
       ArrayList<Transaction> transactions = new ArrayList<Transaction>();
       while(rs.next()) {
-        Transaction transaction = new Transaction(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4), 
+        Transaction transaction = new Transaction(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4),
             OffsetDateTime.ofInstant(Instant.ofEpochMilli(rs.getTimestamp(5).getTime()), ZoneOffset.UTC), // Convert timestamp to UTC
             rs.getString(6), rs.getDate(7).toLocalDate(), rs.getDate(8).toLocalDate(), rs.getDouble(9), rs.getString(10), Transaction.TransactionType.valueOf(rs.getString(11).toUpperCase()));
         transactions.add(transaction);
@@ -100,30 +101,39 @@ public class Storage {
   }
 
   /**
-   * Fetch current balance related to a bank account.
+   * Fetch bank account data.
    * @param bankId      bankId
    * @param clientId    clientId
    * @param accountId   accountId
-   * @return Balance value or NaN (account not found or SQL error)
+   * @return Bank account or null
    */
-  public double getAccountBalance(String bankId, String clientId, String accountId) {
+  public Account getAccount(String bankId, String clientId, String accountId) {
     Connection con = null;
     PreparedStatement st = null;
     try {
       con = this.dataSource.getConnection();
-      st = con.prepareStatement("SELECT balance FROM accounts WHERE bank_id = ? and client_id = ? and account_id = ? ORDER BY fetching_at DESC LIMIT 1");
+      st = con.prepareStatement("SELECT bank_id, b.name, client_id, fetching_at, account_id, balance, number, owner, ownership, type, a.name FROM accounts a, banks b WHERE a.bank_id = b.id AND bank_id = ? and client_id = ? and account_id = ? ORDER BY a.fetching_at DESC LIMIT 1");
       st.setString(1, bankId);
       st.setString(2, clientId);
       st.setString(3, accountId);
       ResultSet rs = st.executeQuery();
       if(rs.next()) {
-        return rs.getDouble(1);
+        return new Account(new Bank(rs.getString(1), rs.getString(2)),
+            rs.getString(3),
+            OffsetDateTime.ofInstant(Instant.ofEpochMilli(rs.getTimestamp(4).getTime()), ZoneOffset.UTC), // Convert timestamp to UTC
+            rs.getString(5),
+            rs.getDouble(6),
+            rs.getString(7),
+            rs.getString(8),
+            Account.AccountOwnership.valueOf(rs.getString(9).toUpperCase()),
+            Account.AccountType.valueOf(rs.getString(10).toUpperCase()),
+            rs.getString(11));
       } else {
-        return Double.NaN;
+        return null;
       }
     } catch (SQLException ex) {
-      System.err.println("Unable to get balance : " + ex.getMessage());
-      return Double.NaN;
+      System.err.println("Unable to get account info: " + ex.getMessage());
+      return null;
     } finally {
       close(con, st);
     }
