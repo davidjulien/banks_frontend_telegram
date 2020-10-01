@@ -11,7 +11,8 @@ public class Transaction {
     CHECK,
     SEPA_DEBIT,
     TRANSFER,
-    INTERESTS
+    INTERESTS,
+    OTHER
   }
 
   private long id;
