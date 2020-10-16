@@ -12,6 +12,7 @@ public class Transaction {
     SEPA_DEBIT,
     TRANSFER,
     INTERESTS,
+    BANK_FEES,
     OTHER
   }
 
