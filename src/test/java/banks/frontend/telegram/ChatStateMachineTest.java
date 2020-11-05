@@ -3,6 +3,8 @@ package banks.frontend.telegram;
 import banks.frontend.telegram.model.Transaction;
 import banks.frontend.telegram.model.Account;
 import banks.frontend.telegram.model.Bank;
+import banks.frontend.telegram.model.Store;
+import banks.frontend.telegram.model.Category;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -207,7 +209,8 @@ public class ChatStateMachineTest {
 
     // Process NewTransactionsEvent
     final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
-    final Transaction transaction = new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description", Transaction.TransactionType.SEPA_DEBIT);
+    final Category[] categories = null;
+    final Transaction transaction = new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description", Transaction.TransactionType.SEPA_DEBIT, 0, null, Transaction.PeriodType.MONTH, null, categories, null);
     transactions.add(transaction);
     final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
 
@@ -237,8 +240,8 @@ public class ChatStateMachineTest {
 
     // Process NewTransactionsEvent
     final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
-    transactions.add(new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT));
-    transactions.add(new Transaction(2, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT));
+    transactions.add(new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT, 0, null, Transaction.PeriodType.MONTH, null, null, null));
+    transactions.add(new Transaction(2, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT, 0, null, Transaction.PeriodType.MONTH, null, null, null));
     final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
 
     csm.process(newTransactionsEvent);
@@ -269,8 +272,8 @@ public class ChatStateMachineTest {
 
     // Process NewTransactionsEvent
     final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
-    transactions.add(new Transaction(1, "ing", "client", "acccount1", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT));
-    transactions.add(new Transaction(2, "ing", "client", "acccount2", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT));
+    transactions.add(new Transaction(1, "ing", "client", "acccount1", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT, 0, null, Transaction.PeriodType.MONTH, null, null, null));
+    transactions.add(new Transaction(2, "ing", "client", "acccount2", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT, 0, null, Transaction.PeriodType.MONTH, null, null, null));
     final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
 
     csm.process(newTransactionsEvent);
@@ -302,8 +305,8 @@ public class ChatStateMachineTest {
 
     // Process NewTransactionsEvent
     final ArrayList<Transaction> transactions = new ArrayList<Transaction>();
-    transactions.add(new Transaction(1, "ing", "client1", "acccount1", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT));
-    transactions.add(new Transaction(2, "ing", "client2", "acccount2", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT));
+    transactions.add(new Transaction(1, "ing", "client1", "acccount1", OffsetDateTime.now(ZoneOffset.UTC), "transaction1", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 123.45, "description 1", Transaction.TransactionType.SEPA_DEBIT, 0, null, Transaction.PeriodType.MONTH, null, null, null));
+    transactions.add(new Transaction(2, "ing", "client2", "acccount2", OffsetDateTime.now(ZoneOffset.UTC), "transaction2", LocalDate.of(2020,9,11), LocalDate.of(2020,9,11), 98.12, "description 2", Transaction.TransactionType.SEPA_DEBIT, 0, null, Transaction.PeriodType.MONTH, null, null, null));
     final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
 
     csm.process(newTransactionsEvent);

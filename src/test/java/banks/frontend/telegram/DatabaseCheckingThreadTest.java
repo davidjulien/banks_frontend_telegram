@@ -49,7 +49,7 @@ public class DatabaseCheckingThreadTest {
     final Storage storage = new Storage(null);
     final ChatStateMachinesManagerMock chatStateMachinesManagerMock = new ChatStateMachinesManagerMock(configuration, bot, storage);
     final ArrayList<Transaction> newTransactionsArrayList = new ArrayList<Transaction>();
-    final Transaction fakeTransaction = new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction", LocalDate.now(), LocalDate.now(), 123.45, "descriiption", Transaction.TransactionType.SEPA_DEBIT);
+    final Transaction fakeTransaction = new Transaction(1, "ing", "client", "acccount", OffsetDateTime.now(ZoneOffset.UTC), "transaction", LocalDate.now(), LocalDate.now(), 123.45, "description", Transaction.TransactionType.SEPA_DEBIT, 0, null, Transaction.PeriodType.MONTH, null, null, null);
     newTransactionsArrayList.add(fakeTransaction);
     final StorageMock storageMock = new StorageMock(newTransactionsArrayList);
 

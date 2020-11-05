@@ -16,6 +16,14 @@ public class Transaction {
     OTHER
   }
 
+  public enum PeriodType {
+    MONTH,
+    BIMESTER,
+    QUARTER,
+    SEMESTER,
+    ANNUAL
+  }
+
   private long id;
   private String bankId;
   private String clientId;
@@ -28,7 +36,14 @@ public class Transaction {
   private String description;
   private TransactionType transactionType;
 
-  public Transaction(long id, String bankId, String clientId, String accountId, OffsetDateTime fetchingAt, String transactionId, LocalDate accountingDate, LocalDate effectiveDate, double amount, String description, TransactionType transactionType) {
+  private long extMappingId;
+  private LocalDate extDate;
+  private PeriodType extPeriod;
+  private Budget extBudget;
+  private Category[] extCategories;
+  private Store extStore;
+
+  public Transaction(long id, String bankId, String clientId, String accountId, OffsetDateTime fetchingAt, String transactionId, LocalDate accountingDate, LocalDate effectiveDate, double amount, String description, TransactionType transactionType, long extMappingId, LocalDate extDate, PeriodType extPeriod, Budget extBudget, Category[] extCategories, Store extStore) {
     this.id = id;
     this.bankId = bankId;
     this.clientId = clientId;
@@ -40,6 +55,12 @@ public class Transaction {
     this.amount = amount;
     this.description = description;
     this.transactionType = transactionType;
+    this.extMappingId = extMappingId;
+    this.extDate = extDate;
+    this.extPeriod = extPeriod;
+    this.extBudget = extBudget;
+    this.extCategories = extCategories;
+    this.extStore = extStore;
   }
 
   public String getBankId() {
@@ -55,7 +76,19 @@ public class Transaction {
   }
 
   public String toMarkdownString() {
-    return String.format("*%s*                        *%.2f €*\n%s", this.effectiveDate.toString(), this.amount, this.description);
+    // Replace transaction description with store name
+    String description = this.extStore == null ? this.description : this.extStore.getName();
+    // Add budget info
+    if (this.extBudget != null) {
+      description += "\n"+this.extBudget.getName();
+    }
+    // Add categories info
+    if (this.extCategories != null) {
+      description += this.extBudget == null ? "\n" : "";
+      for(Category cat : this.extCategories) {
+        description += " > "+cat.getName();
+      }
+    }
+    return String.format("*%s*                        *%.2f €*\n%s", this.effectiveDate.toString(), this.amount, description);
   }
-
 }

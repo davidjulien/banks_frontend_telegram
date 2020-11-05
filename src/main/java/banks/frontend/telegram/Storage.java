@@ -3,6 +3,9 @@ package banks.frontend.telegram;
 import banks.frontend.telegram.model.Transaction;
 import banks.frontend.telegram.model.Account;
 import banks.frontend.telegram.model.Bank;
+import banks.frontend.telegram.model.Budget;
+import banks.frontend.telegram.model.Store;
+import banks.frontend.telegram.model.Category;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,6 +14,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.sql.Array;
 
 import javax.sql.DataSource;
 
@@ -79,15 +83,23 @@ public class Storage {
     PreparedStatement st = null;
     try {
       con = this.dataSource.getConnection();
-      st = con.prepareStatement("SELECT id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type FROM transactions WHERE fetching_at > ? ORDER BY bank_id, client_id, account_id, effective_date DESC, fetching_position DESC;");
+      st = con.prepareStatement("SELECT transactions.id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type, ext_mapping_id, ext_date, ext_period, budgets.id, budgets.name, case when ext_categories_id is null then null else ARRAY(select id FROM categories where ext_categories_id @> ARRAY[id] order by id) end as ext_categories_id, ARRAY(select name FROM categories where ext_categories_id @> ARRAY[id] order by id) as ext_categories_name, stores.id, stores.name FROM transactions LEFT JOIN budgets ON ext_budget_id = budgets.id LEFT JOIN stores ON ext_store_id = stores.id WHERE fetching_at > ? ORDER BY bank_id, client_id, account_id, effective_date DESC, fetching_position DESC;");
       st.setObject(1, lastChecking.toLocalDateTime()); // Because we store timestamp without time zone values
       ResultSet rs = st.executeQuery();
 
       ArrayList<Transaction> transactions = new ArrayList<Transaction>();
       while(rs.next()) {
+        Category[] categories = build_categories(rs.getArray(17), rs.getArray(18));
+
         Transaction transaction = new Transaction(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4),
             OffsetDateTime.ofInstant(Instant.ofEpochMilli(rs.getTimestamp(5).getTime()), ZoneOffset.UTC), // Convert timestamp to UTC
-            rs.getString(6), rs.getDate(7).toLocalDate(), rs.getDate(8).toLocalDate(), rs.getDouble(9), rs.getString(10), Transaction.TransactionType.valueOf(rs.getString(11).toUpperCase()));
+            rs.getString(6), rs.getDate(7).toLocalDate(), rs.getDate(8).toLocalDate(), rs.getDouble(9), rs.getString(10), Transaction.TransactionType.valueOf(rs.getString(11).toUpperCase()),
+            rs.getLong(12),
+            rs.getObject(13) == null ? null : rs.getDate(13).toLocalDate(),
+            Transaction.PeriodType.valueOf(rs.getString(14).toUpperCase()),
+            rs.getObject(15) == null ? null : new Budget(rs.getInt(15), rs.getString(16)),
+            categories,
+            rs.getObject(19) == null ? null : new Store(rs.getInt(19), rs.getString(20)));
         transactions.add(transaction);
       }
 
@@ -97,6 +109,22 @@ public class Storage {
       return null;
     } finally {
       close(con, st);
+    }
+  }
+
+  private Category[] build_categories(Array ids0, Array names0) throws java.sql.SQLException {
+    if (ids0 == null) {
+      return null;
+    } else {
+      Integer[] ids = (Integer[])ids0.getArray();
+      String[] names = (String[])names0.getArray();
+
+      Category[] categories = new Category[ids.length];
+      for(int i = 0; i < names.length; i++) {
+        categories[i] = new Category(ids[i], names[i]);
+      }
+
+      return categories;
     }
   }
 
