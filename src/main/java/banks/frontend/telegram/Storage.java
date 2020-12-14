@@ -83,7 +83,7 @@ public class Storage {
     PreparedStatement st = null;
     try {
       con = this.dataSource.getConnection();
-      st = con.prepareStatement("SELECT transactions.id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type, ext_mapping_id, ext_date, ext_period, budgets.id, budgets.name, case when ext_categories_id is null then null else ARRAY(select id FROM categories where ext_categories_id @> ARRAY[id] order by id) end as ext_categories_id, ARRAY(select name FROM categories where ext_categories_id @> ARRAY[id] order by id) as ext_categories_name, stores.id, stores.name FROM transactions LEFT JOIN budgets ON ext_budget_id = budgets.id LEFT JOIN stores ON ext_store_id = stores.id WHERE fetching_at > ? ORDER BY bank_id, client_id, account_id, effective_date DESC, fetching_position DESC;");
+      st = con.prepareStatement("SELECT transactions.id, bank_id, client_id, account_id, fetching_at, transaction_id, accounting_date, effective_date, amount, description, type, ext_mapping_id, ext_date, ext_period, budgets.id, budgets.name, case when ext_categories_ids is null then null else ARRAY(select id FROM categories where ext_categories_ids @> ARRAY[id] order by id) end as ext_categories_ids, ARRAY(select name FROM categories where ext_categories_ids @> ARRAY[id] order by id) as ext_categories_name, stores.id, stores.name FROM transactions LEFT JOIN budgets ON ext_budget_id = budgets.id LEFT JOIN stores ON ext_store_id = stores.id WHERE fetching_at > ? ORDER BY bank_id, client_id, account_id, effective_date DESC, fetching_position DESC;");
       st.setObject(1, lastChecking.toLocalDateTime()); // Because we store timestamp without time zone values
       ResultSet rs = st.executeQuery();
 
@@ -96,7 +96,7 @@ public class Storage {
             rs.getString(6), rs.getDate(7).toLocalDate(), rs.getDate(8).toLocalDate(), rs.getDouble(9), rs.getString(10), Transaction.TransactionType.valueOf(rs.getString(11).toUpperCase()),
             rs.getLong(12),
             rs.getObject(13) == null ? null : rs.getDate(13).toLocalDate(),
-            Transaction.PeriodType.valueOf(rs.getString(14).toUpperCase()),
+            rs.getObject(14) == null ? null : Transaction.PeriodType.valueOf(rs.getString(14).toUpperCase()),
             rs.getObject(15) == null ? null : new Budget(rs.getInt(15), rs.getString(16)),
             categories,
             rs.getObject(19) == null ? null : new Store(rs.getInt(19), rs.getString(20)));
