@@ -26,12 +26,18 @@ public class BanksUpdatesListener implements UpdatesListener {
 
   @Override
   public int process(final List<Update> updates) {
-    updates.forEach((update) -> {
-      final long chatId = update.message().chat().id();
-      final ChatStateMachine csm = this.chatStateMachinesManager.getOrCreateChatStateMachine(chatId);
-      csm.process(update);
-    });
+    try {
+      updates.forEach((update) -> {
+        final long chatId = update.message().chat().id();
+        final ChatStateMachine csm = this.chatStateMachinesManager.getOrCreateChatStateMachine(chatId);
+        csm.process(update);
+      });
 
-    return UpdatesListener.CONFIRMED_UPDATES_ALL;
+      return UpdatesListener.CONFIRMED_UPDATES_ALL;
+    } catch (Exception e) {
+      System.err.println("Exception : ");
+      e.printStackTrace();
+      return UpdatesListener.CONFIRMED_UPDATES_NONE;
+    }
   }
 }
