@@ -33,8 +33,10 @@ public class DatabaseCheckingThread implements Runnable {
     final ArrayList<Transaction> transactions = this.storage.getNewTransactionsSince(this.lastChecking);
 
     if (transactions.isEmpty()) {
+      System.out.println("[" + OffsetDateTime.now(ZoneOffset.UTC) + "]     No transactions");
       // Nothing to do
     } else {
+      System.out.println("[" + OffsetDateTime.now(ZoneOffset.UTC) + "]     Notify transactions");
       final NewTransactionsEvent newTransactionsEvent = new NewTransactionsEvent(transactions);
 
       // Send NewTransactionsEvent to all ChatStateMachines
