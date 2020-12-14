@@ -89,6 +89,8 @@ public class Transaction {
         description += " > "+cat.getName();
       }
     }
-    return String.format("*%s*                        *%.2f €*\n%s", this.effectiveDate.toString(), this.amount, description);
+    // Use real date of transaction instead of bank date
+    final LocalDate date = this.extDate != null ? this.extDate : this.effectiveDate;
+    return String.format("*%s*                        *%.2f €*\n%s", date.toString(), this.amount, description);
   }
 }
