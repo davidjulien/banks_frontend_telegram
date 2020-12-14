@@ -3,6 +3,8 @@ package banks.frontend.telegram;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.*;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import com.pengrad.telegrambot.TelegramBot;
 
@@ -49,7 +51,8 @@ public class App {
         scheduler.scheduleAtFixedRate(databaseCheckingThread, DATABASECHECKING_DELAY, DATABASECHECKING_PERIOD, TimeUnit.SECONDS);
 
         // Start bot
-        bot.setUpdatesListener(new BanksUpdatesListener(configuration, bot, chatStateMachinesManager));
+        bot.setUpdatesListener(new BanksUpdatesListener(configuration, bot, chatStateMachinesManager),
+            (exception) -> { System.err.println("[" + OffsetDateTime.now(ZoneOffset.UTC) + "] Exception in bot listener : "+exception.toString()); } );
       }
     }
   }
