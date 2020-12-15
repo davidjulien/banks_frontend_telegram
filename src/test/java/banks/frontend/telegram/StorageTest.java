@@ -177,8 +177,8 @@ public class StorageTest {
     ArrayList<Transaction> transactions = storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,8,0,0, 0, ZoneOffset.UTC));
     assertEquals(1, transactions.size());
 
-    transactions = storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,6,6,0,0,0, ZoneOffset.UTC));
-    assertEquals(2, transactions.size());
+    transactions = storage.getNewTransactionsSince(OffsetDateTime.of(2020,9,1,0,0,0,0, ZoneOffset.UTC));
+    assertEquals(3, transactions.size());
   }
 
   @Test
