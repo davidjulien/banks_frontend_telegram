@@ -15,6 +15,8 @@ import com.pengrad.telegrambot.response.BaseResponse;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import static org.mockito.Mockito.*;
+
 
 /**
  * Unit tests for BanksUpdatesListener
@@ -60,5 +62,35 @@ public class BanksUpdatesListenerTest
     assertNotNull(chatStateMachineMock);
     assertEquals(1, chatStateMachineMock.processCalls.size());                                              // Call to process Update
     assertEquals(update, chatStateMachineMock.processCalls.get(0));
+  }
+
+  @Test
+  public void shouldCreateChatStateMachineAndProcessUpdateTriggersException() {
+    // Mock ChatStateMachine to throw an exception during processing
+    final ChatStateMachine csmMock = mock(ChatStateMachine.class);
+    doThrow(new NullPointerException("Error occurred"))
+      .when(csmMock).process(any(Update.class));
+
+    // Mock ChatStateMachinesManager to return a mocked ChatStateMachine
+    final ChatStateMachinesManager chatStateMachinesManagerMock = mock(ChatStateMachinesManager.class);
+    when(chatStateMachinesManagerMock.getOrCreateChatStateMachine(CHAT_ID)).thenReturn(csmMock);
+
+    final Configuration configuration = new Configuration(BOT_TOKEN, SECURITY_CODE);
+    final TelegramBot bot = new TelegramBot(BOT_TOKEN);
+    final Storage storage = new Storage(null);
+    BanksUpdatesListener listener = new BanksUpdatesListener(configuration, bot, chatStateMachinesManagerMock);
+
+    /* List of updates */
+    ArrayList<Update> updatesList = new ArrayList<Update>();
+    Update update = ChatStateMachineTest.buildUpdateWithMessage(CHAT_ID, "Hello World");
+    updatesList.add(update);
+
+    /* Processing list */
+    int ret = listener.process(updatesList);
+
+    /* Verify that we have to not process updates correctly */
+    assertEquals(UpdatesListener.CONFIRMED_UPDATES_NONE, ret);
+
+    verify(csmMock, times(1)).process(any(Update.class));
   }
 }
