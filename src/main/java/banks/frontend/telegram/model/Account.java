@@ -12,7 +12,9 @@ public class Account {
   public enum AccountType {
     CURRENT,
     SAVINGS,
-    HOME_LOAN
+    HOME_LOAN,
+    PURSE,
+    MARKETS
   }
 
   private Bank bank;

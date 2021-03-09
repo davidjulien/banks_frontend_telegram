@@ -13,6 +13,7 @@ public class Transaction {
     TRANSFER,
     INTERESTS,
     BANK_FEES,
+    STOCK,
     OTHER
   }
 
